@@ -9,6 +9,9 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentUser = null;
 
+// Detectamos si estamos en la página de herramientas interactivas
+const isToolsPage = document.body.classList.contains('page-tools');
+const isDatosPage = document.body.classList.contains('page-datos');
 
 // ─── Configuración de series ──────────────────────────────────────────────────
 // premium: true  → requiere cuenta para ver
@@ -18,6 +21,7 @@ const SERIES = [
   {
     id:       'tc-oficial',
     titulo:   'Tipo de Cambio Oficial',
+    categoria: 'Mercado Cambiario',
     fuente:   'bluelytics',
     tipo_tc:  'oficial',
     unidad:   '$/USD',
@@ -29,6 +33,7 @@ const SERIES = [
   {
     id:      'tc-blue',
     titulo:  'Dólar Blue',
+    categoria: 'Mercado Cambiario',
     fuente:  'bluelytics',
     tipo_tc: 'blue',
     unidad:  '$/USD',
@@ -39,6 +44,7 @@ const SERIES = [
   {
     id:        'inflacion',
     titulo:    'Inflación Mensual (IPC)',
+    categoria: 'Precios e Inflación',
     fuente:    'indec',
     serieId:   '148.3_INIVELNAL_DICI_M_26',
     unidad:    '%',
@@ -52,6 +58,7 @@ const SERIES = [
   {
     id:       'emae',
     titulo:   'Actividad Económica (EMAE)',
+    categoria: 'Actividad Económica',
     fuente:   'indec',
     serieId:  '143.3_NO_PR_2004_A_21',
     unidad:   'índice',
@@ -60,6 +67,30 @@ const SERIES = [
     premium:  true,
     variacion: false,
   },
+  {
+    id:        'icc-ditella',
+    titulo:    'Confianza del Consumidor (Var. Mensual)',
+    categoria: 'Confianza y Expectativas',
+    fuente:    'supabase',
+    serieId:   'icc',
+    unidad:    '%',
+    color:     '#ea580c',
+    meses:     24,
+    premium:   false,
+    variacion: true,
+    tipo:      'bar',
+  },
+  {
+    id:        'ei-ditella',
+    titulo:    'Expectativas de Inflación (Di Tella)',
+    categoria: 'Confianza y Expectativas',
+    fuente:    'supabase',
+    serieId:   'ei',
+    unidad:    '%',
+    color:     '#eab308',
+    meses:     24,
+    premium:   false,
+  }
 ];
 
 
@@ -67,6 +98,10 @@ const SERIES = [
 
 function formatFecha(fechaStr) {
   if (!fechaStr) return '—';
+  // Nuevos formatos de agregación
+  if (fechaStr.includes('-Q')) return fechaStr.replace('-Q', ' T'); // "2023-Q1" -> "2023 T1"
+  if (/^\d{4}$/.test(fechaStr)) return fechaStr; // "2023"
+
   if (fechaStr.length === 7) {
     const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
     const [y, m] = fechaStr.split('-');
@@ -83,6 +118,24 @@ function isoHace(dias) {
   return d.toISOString().split('T')[0];
 }
 
+// Generador temporal de datos para series de terceros sin API pública estable
+function generarMock(tipo, meses) {
+  const datos = [];
+  let valorActual = tipo.includes('icc') ? 42.5 : 120; // Valores iniciales lógicos
+  const d = new Date();
+  
+  for (let i = 0; i < meses; i++) {
+    const fecha = new Date(d.getFullYear(), d.getMonth() - (meses - 1 - i), 1);
+    const variacion = tipo.includes('icc') ? (Math.random() * 4 - 2) : (Math.random() * 15 - 7.5);
+    valorActual = Math.max(0, valorActual + variacion);
+    
+    datos.push({
+      fecha: fecha.toISOString().split('T')[0],
+      valor: +(valorActual).toFixed(2)
+    });
+  }
+  return datos;
+}
 
 // ─── Fetch APIs ───────────────────────────────────────────────────────────────
 
@@ -109,6 +162,19 @@ async function fetchIndec(serieId, meses) {
   return (json.data || [])
     .map(([fecha, valor]) => ({ fecha, valor }))
     .reverse();
+}
+
+async function fetchSupabase(serieId, meses) {
+  // Lee los datos reales desde tu propia base de datos
+  const { data, error } = await sb
+    .from('Indicadores externos')
+    .select('fecha, valor')
+    .eq('indicador', serieId)
+    .order('fecha', { ascending: false })
+    .limit(meses);
+
+  if (error) throw new Error(`Supabase: ${error.message}`);
+  return data.reverse();
 }
 
 
@@ -253,10 +319,27 @@ function crearCard(serie) {
   div.style.setProperty('--card-color', serie.color);
   div.innerHTML = `
     <div class="card-header">
-      <h2 class="card-title">${serie.titulo}</h2>
+      <h2 class="card-title">
+        ${serie.titulo}
+        ${isToolsPage ? `<button id="btn-export-${serie.id}" style="display: none; margin-left: 8px; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; cursor: pointer; border: 1px solid #cbd5e1; background: transparent; color: inherit;" title="Descargar datos en CSV">⬇️ CSV</button>` : ''}
+      </h2>
       <span class="badge muted" id="badge-${serie.id}">Cargando…</span>
     </div>
     <div class="card-meta" id="meta-${serie.id}"></div>
+    ${isToolsPage ? `
+    <div class="card-controls" id="controls-${serie.id}" style="padding: 0.25rem 1rem 0.75rem; font-size: 0.8rem; display: none; gap: 1rem; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <label style="font-weight: 500;">Agrupar</label>
+        <div class="btn-group" id="agg-group-${serie.id}"></div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 280px;">
+        <label style="font-weight: 500;">Período</label>
+        <input type="date" id="start-date-${serie.id}" style="padding: 2px 4px; border-radius: 4px; border: 1px solid #e2e8f0; outline: none; flex: 1;">
+        <span class="muted">→</span>
+        <input type="date" id="end-date-${serie.id}" style="padding: 2px 4px; border-radius: 4px; border: 1px solid #e2e8f0; outline: none; flex: 1;">
+      </div>
+    </div>
+    ` : ''}
     <div class="chart-wrap" id="wrap-${serie.id}">
       <div class="skeleton"></div>
     </div>
@@ -300,6 +383,12 @@ function renderChart(serie, datos) {
   const canvas = wrap.querySelector('canvas');
 
   if (charts[serie.id]) charts[serie.id].destroy();
+
+  if (!datos || datos.length === 0) {
+    wrap.innerHTML = `<div class="chart-error" style="padding: 2rem 1rem;">No hay datos para el período seleccionado.</div>`;
+    document.getElementById(`badge-${serie.id}`).textContent = 'Sin datos';
+    return;
+  }
 
   const tipo   = serie.tipo || 'line';
   const labels = datos.map(d => formatFecha(d.fecha));
@@ -356,12 +445,210 @@ function renderChart(serie, datos) {
 }
 
 
+// ─── Controles de Gráfico ─────────────────────────────────────────────────────
+
+const rawDataStore = {};
+
+function agregarDatos(datos, periodo) {
+  // Si el período es el original (diario o mensual), no hacer nada
+  if (periodo === 'diario' || periodo === 'mensual_orig') return datos;
+
+  const groups = {};
+  datos.forEach(d => {
+    // Usar T00:00:00 para evitar problemas de zona horaria al parsear solo la fecha
+    const fecha = new Date(d.fecha.slice(0, 10) + 'T00:00:00');
+    let key;
+
+    if (periodo === 'mensual') {
+      key = fecha.toISOString().slice(0, 7); // YYYY-MM
+    } else if (periodo === 'trimestral') {
+      const quarter = Math.floor(fecha.getMonth() / 3) + 1;
+      key = `${fecha.getFullYear()}-Q${quarter}`;
+    } else if (periodo === 'anual') {
+      key = fecha.getFullYear().toString();
+    }
+
+    if (!key) return;
+    if (!groups[key]) {
+      groups[key] = { valores: [], fecha: key };
+    }
+    groups[key].valores.push(d.valor);
+  });
+
+  return Object.values(groups).map(g => {
+    // Para series de tipo de cambio o índices, el promedio es una buena aproximación.
+    // Para series de variación (inflación), lo ideal sería componer, pero el promedio
+    // de las tasas mensuales es una simplificación visualmente aceptable.
+    const valorAgregado = g.valores.reduce((a, b) => a + b, 0) / g.valores.length;
+    return { fecha: g.fecha, valor: valorAgregado };
+  }).sort((a, b) => a.fecha.localeCompare(b.fecha));
+}
+
+function setupChartControls(serie, datos) {
+  if (!isToolsPage) return; // Si no es la página de herramientas, salimos
+
+  const controlsContainer = document.getElementById(`controls-${serie.id}`);
+  const aggGroup = document.getElementById(`agg-group-${serie.id}`);
+  const startDateInput = document.getElementById(`start-date-${serie.id}`);
+  const endDateInput = document.getElementById(`end-date-${serie.id}`);
+
+  // 1. Poblar botones de agregación
+  aggGroup.innerHTML = '';
+  const esSerieMensual = serie.fuente === 'indec';
+  const periodosDisponibles = esSerieMensual
+    ? [['mensual_orig', 'Mensual'], ['trimestral', 'Trimestral'], ['anual', 'Anual']]
+    : [['diario', 'Diario'], ['mensual', 'Mensual'], ['trimestral', 'Trimestral'], ['anual', 'Anual']];
+
+  periodosDisponibles.forEach(([key, label], index) => {
+    const btn = document.createElement('button');
+    btn.textContent = label;
+    btn.dataset.agg = key;
+    Object.assign(btn.style, { background: 'transparent', border: '1px solid #e2e8f0', padding: '3px 8px', cursor: 'pointer', fontSize: '0.75rem' });
+    if (index === 0) btn.style.borderRadius = '6px 0 0 6px';
+    if (index === periodosDisponibles.length - 1) btn.style.borderRadius = '0 6px 6px 0';
+    if (index > 0) btn.style.borderLeft = 'none';
+
+    btn.onclick = () => {
+      aggGroup.querySelectorAll('button').forEach(b => { b.style.background = 'transparent'; b.style.color = 'inherit'; });
+      btn.style.background = '#e2e8f0';
+      btn.style.color = '#1e293b';
+      actualizarGrafico(serie.id);
+    };
+    aggGroup.appendChild(btn);
+  });
+  aggGroup.firstChild.style.background = '#e2e8f0';
+  aggGroup.firstChild.style.color = '#1e293b';
+
+  // 2. Poblar inputs de fecha
+  const minDate = datos[0].fecha.slice(0, 10);
+  const maxDate = datos[datos.length - 1].fecha.slice(0, 10);
+  startDateInput.min = endDateInput.min = minDate;
+  startDateInput.max = endDateInput.max = maxDate;
+  startDateInput.value = minDate;
+  endDateInput.value = maxDate;
+
+  // 3. Agregar listeners
+  startDateInput.onchange = () => actualizarGrafico(serie.id);
+  endDateInput.onchange = () => actualizarGrafico(serie.id);
+
+  // 4. Mostrar controles
+  controlsContainer.style.display = 'flex';
+}
+
+function actualizarGrafico(serieId) {
+  const serie = SERIES.find(s => s.id === serieId);
+  const rawData = rawDataStore[serieId];
+  if (!serie || !rawData) return;
+
+  let processedData = rawData;
+
+  // Solo aplicar filtros si estamos en la vista de herramientas interactivas
+  if (isToolsPage) {
+    const aggBtn = document.querySelector(`#agg-group-${serieId} button[style*="background: rgb(226, 232, 240)"]`);
+    const aggregation = aggBtn ? aggBtn.dataset.agg : 'diario';
+    const startDate = document.getElementById(`start-date-${serieId}`).value;
+    const endDate = document.getElementById(`end-date-${serieId}`).value;
+
+    const filteredData = rawData.filter(d => d.fecha.slice(0, 10) >= startDate && d.fecha.slice(0, 10) <= endDate);
+    processedData = agregarDatos(filteredData, aggregation);
+  }
+
+  renderChart(serie, processedData);
+
+  const badge = document.getElementById(`badge-${serie.id}`);
+  if (processedData.length > 0) {
+    const ultimoValor = processedData[processedData.length - 1].valor;
+    badge.textContent = `${ultimoValor.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${serie.unidad}`;
+  }
+
+  if (isToolsPage) {
+    const btnExport = document.getElementById(`btn-export-${serieId}`);
+    if (btnExport) btnExport.onclick = () => exportarCSV(serie, processedData);
+  }
+}
+
+// ─── Herramientas Extras ──────────────────────────────────────────────────────
+
+const estadoMercado = { oficial: null, blue: null };
+
+function exportarCSV(serie, datos) {
+  if (!datos || !datos.length) return;
+  const cabeceras = ['Fecha', 'Valor'];
+  const filas = datos.map(d => `${d.fecha},${d.valor}`);
+  const csvContent = [cabeceras.join(','), ...filas].join('\n');
+  
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `macroar_${serie.id}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function crearCardCalculadora() {
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.id = 'card-calculadora';
+  div.style.setProperty('--card-color', '#f59e0b'); // Color ámbar
+  div.innerHTML = `
+    <div class="card-header">
+      <h2 class="card-title">Calculadora de Divisas</h2>
+    </div>
+    <div class="card-meta">Convertí ARS ↔ USD usando las cotizaciones actuales</div>
+    <div class="chart-wrap" style="height: auto; padding: 1rem 0;">
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+        <input type="number" id="calc-monto" placeholder="Monto..." value="1000" style="flex: 1; padding: 0.5rem; border-radius: 4px; border: 1px solid #e2e8f0; outline: none; width: 50%;">
+        <select id="calc-moneda" style="padding: 0.5rem; border-radius: 4px; border: 1px solid #e2e8f0; outline: none; background: #fff; width: 50%;">
+          <option value="USD">Dólares (USD) a Pesos</option>
+          <option value="ARS">Pesos (ARS) a Dólares</option>
+        </select>
+      </div>
+      <div id="calc-resultados" style="font-size: 0.95rem; line-height: 1.6; background: #f8fafc; padding: 0.75rem; border-radius: 6px; border: 1px solid #e2e8f0;">
+        <span class="muted">Esperando datos del mercado...</span>
+      </div>
+    </div>
+  `;
+  
+  // Escuchar cambios en los inputs para recalcular automáticamente
+  div.addEventListener('input', actualizarCalculadora);
+  
+  return div;
+}
+
+function actualizarCalculadora() {
+  const montoInput = document.getElementById('calc-monto');
+  const monedaInput = document.getElementById('calc-moneda');
+  const resultadosDiv = document.getElementById('calc-resultados');
+
+  if (!montoInput || !monedaInput || !resultadosDiv) return;
+
+  const monto = parseFloat(montoInput.value) || 0;
+  const modo = monedaInput.value;
+
+  if (!estadoMercado.oficial && !estadoMercado.blue) {
+    resultadosDiv.innerHTML = '<span class="muted">Esperando datos del mercado...</span>';
+    return;
+  }
+
+  let html = '';
+  if (modo === 'USD') { // De Dólares a Pesos
+     if (estadoMercado.oficial) html += `<div style="display: flex; justify-content: space-between;"><strong>Oficial:</strong> <span>${(monto * estadoMercado.oficial).toLocaleString('es-AR', {maximumFractionDigits:2})} ARS</span></div>`;
+     if (estadoMercado.blue) html += `<div style="display: flex; justify-content: space-between;"><strong>Blue:</strong> <span>${(monto * estadoMercado.blue).toLocaleString('es-AR', {maximumFractionDigits:2})} ARS</span></div>`;
+  } else { // De Pesos a Dólares
+     if (estadoMercado.oficial) html += `<div style="display: flex; justify-content: space-between;"><strong>Oficial:</strong> <span>${(monto / estadoMercado.oficial).toLocaleString('es-AR', {maximumFractionDigits:2})} USD</span></div>`;
+     if (estadoMercado.blue) html += `<div style="display: flex; justify-content: space-between;"><strong>Blue:</strong> <span>${(monto / estadoMercado.blue).toLocaleString('es-AR', {maximumFractionDigits:2})} USD</span></div>`;
+  }
+  resultadosDiv.innerHTML = html;
+}
+
+
 // ─── Carga de cada serie ──────────────────────────────────────────────────────
 
 async function cargarSerie(serie) {
   const badge = document.getElementById(`badge-${serie.id}`);
   const meta  = document.getElementById(`meta-${serie.id}`);
-  const wrap  = document.getElementById(`wrap-${serie.id}`);
 
   try {
     let datos;
@@ -370,6 +657,18 @@ async function cargarSerie(serie) {
     if (serie.fuente === 'bluelytics') {
       const dias = esLogueado ? serie.dias : (serie.diasFree ?? serie.dias);
       datos = await fetchBluelytics(serie.tipo_tc, dias);
+    } else if (serie.fuente === 'supabase') {
+      const meses = esLogueado ? serie.meses : (serie.mesesFree ?? serie.meses);
+      const raw = await fetchSupabase(serie.serieId, meses);
+      datos = serie.variacion
+        ? raw.slice(1).map((d, i) => ({
+            fecha: d.fecha,
+            valor: raw[i].valor > 0 ? +((d.valor / raw[i].valor - 1) * 100).toFixed(2) : null,
+          })).filter(d => d.valor !== null)
+        : raw;
+    } else if (serie.fuente.startsWith('mock')) {
+      const meses = esLogueado ? serie.meses : (serie.mesesFree ?? serie.meses);
+      datos = generarMock(serie.fuente, meses);
     } else {
       const meses = esLogueado ? serie.meses : (serie.mesesFree ?? serie.meses);
       const raw   = await fetchIndec(serie.serieId, meses);
@@ -383,23 +682,34 @@ async function cargarSerie(serie) {
 
     if (!datos.length) throw new Error('Sin datos disponibles');
 
-    const ultimo   = datos[datos.length - 1];
-    const valorFmt = ultimo.valor.toLocaleString('es-AR', { maximumFractionDigits: 2 });
+    // Guardar datos crudos para manipulación
+    rawDataStore[serie.id] = datos;
+
+    // Actualizar elementos estáticos con el último dato disponible
+    const ultimo = datos[datos.length - 1];
     const limitado = !currentUser && (serie.diasFree || serie.mesesFree);
-
-    badge.textContent = `${valorFmt} ${serie.unidad}`;
-    badge.classList.remove('muted');
     meta.textContent  = `Último dato: ${formatFecha(ultimo.fecha)}${limitado ? ' · historial limitado' : ''}`;
-
     actualizarHeroStat(serie, ultimo.valor);
-    renderChart(serie, datos);
+
+    // Configurar controles y renderizar el gráfico por primera vez
+    if (isToolsPage) setupChartControls(serie, datos);
+    actualizarGrafico(serie.id);
+
+    if (isToolsPage) {
+      // Guardar los datos para usarlos en la calculadora y actualizarla
+      if (serie.id === 'tc-oficial') { estadoMercado.oficial = ultimo.valor; actualizarCalculadora(); }
+      if (serie.id === 'tc-blue') { estadoMercado.blue = ultimo.valor; actualizarCalculadora(); }
+
+      const btnExport = document.getElementById(`btn-export-${serie.id}`);
+      if (btnExport) btnExport.style.display = 'inline-block';
+    }
 
   } catch (err) {
     badge.textContent = 'Error';
     badge.classList.remove('muted');
     badge.classList.add('error');
     meta.textContent = err.message;
-    wrap.innerHTML   = `<div class="chart-error">No se pudo cargar el indicador</div>`;
+    document.getElementById(`wrap-${serie.id}`).innerHTML = `<div class="chart-error">No se pudo cargar el indicador</div>`;
   }
 }
 
@@ -408,16 +718,48 @@ async function cargarSerie(serie) {
 
 function loadAll() {
   _bluelyticsCache = null;
+
   const grid = document.getElementById('grid');
-  grid.innerHTML = '';
+  const catContainer = document.getElementById('categories-container');
+
+  if (grid) grid.innerHTML = '';
+  if (catContainer) catContainer.innerHTML = '';
+
   document.getElementById('last-update').textContent = 'Actualizando…';
 
   inicializarHeroStats();
 
-  SERIES.forEach(serie => {
-    const bloqueada = serie.premium && !currentUser;
-    grid.appendChild(bloqueada ? crearCardBloqueada(serie) : crearCard(serie));
-  });
+  if (isDatosPage && catContainer) {
+    const categorias = [...new Set(SERIES.map(s => s.categoria || 'Otros'))];
+
+    categorias.forEach(cat => {
+      const section = document.createElement('div');
+      section.className = 'category-section';
+      section.innerHTML = `
+        <h3 style="margin: 2.5rem 0 1rem; font-family: 'Poppins', sans-serif; font-size: 1.15rem; color: var(--navy); border-bottom: 2px solid var(--border); padding-bottom: 0.5rem;">${cat}</h3>
+        <div class="grid" id="grid-${cat.replace(/\s+/g, '-').toLowerCase()}"></div>
+      `;
+      catContainer.appendChild(section);
+
+      const catGrid = section.querySelector('.grid');
+      const seriesCat = SERIES.filter(s => (s.categoria || 'Otros') === cat);
+
+      seriesCat.forEach(serie => {
+        const bloqueada = serie.premium && !currentUser;
+        catGrid.appendChild(bloqueada ? crearCardBloqueada(serie) : crearCard(serie));
+      });
+    });
+  } else if (grid) {
+    SERIES.forEach(serie => {
+      const bloqueada = serie.premium && !currentUser;
+      grid.appendChild(bloqueada ? crearCardBloqueada(serie) : crearCard(serie));
+    });
+
+    // Agregar la tarjeta de calculadora al final del grid de métricas
+    if (isToolsPage) {
+      grid.appendChild(crearCardCalculadora());
+    }
+  }
 
   const seriesACargar = SERIES.filter(s => !(s.premium && !currentUser));
   Promise.all(seriesACargar.map(cargarSerie)).then(() => {

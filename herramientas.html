@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MacroAr — Economía Argentina</title>
+  <title>MacroAr — Herramientas de Análisis</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
@@ -11,31 +11,24 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body>
+<body class="page-tools">
 
   <!-- Navbar -->
   <nav class="navbar">
     <div class="nav-inner">
       <div class="nav-logo">Macro<span>Ar</span></div>
       <div class="nav-links">
-        <a href="index.html" style="color: #fff;">Inicio</a>
+        <a href="index.html">Inicio</a>
         <a href="datos.html">Datos</a>
-        <a href="herramientas.html">Herramientas</a>
+        <a href="herramientas.html" style="color: #fff;">Herramientas</a>
       </div>
       <div class="nav-actions">
         <span id="last-update">—</span>
-
-        <!-- Enlace al chat de Streamlit -->
         <button class="btn-ghost" style="color: #10b981; font-weight: bold;" onclick="window.open('http://localhost:8501', '_blank')">🤖 Chat IA</button>
-
-        <!-- Logged out -->
         <button class="btn-ghost" id="btn-login" onclick="openModal('login')">Iniciar sesión</button>
         <button class="btn-primary" id="btn-signup" onclick="openModal('signup')">Registrarse gratis</button>
-
-        <!-- Logged in (hidden by default) -->
         <span class="user-email" id="user-email"></span>
         <button class="btn-ghost" id="btn-logout" onclick="signOut()">Salir</button>
-
         <button class="btn-primary" onclick="loadAll()">↻ Actualizar</button>
       </div>
     </div>
@@ -76,9 +69,9 @@
   <section class="hero">
     <div class="hero-inner">
       <div class="hero-text">
-        <p class="hero-eyebrow">Datos en tiempo real</p>
-        <h1>Indicadores Macroeconómicos<br>de <em>Argentina</em></h1>
-        <p class="hero-sub">Series actualizadas desde el BCRA e INDEC</p>
+        <p class="hero-eyebrow">Análisis Avanzado</p>
+        <h1>Herramientas <em>Interactivas</em></h1>
+        <p class="hero-sub">Manipulá períodos, agrupá datos y exportá la información</p>
       </div>
       <div class="hero-stats" id="hero-stats"></div>
     </div>
@@ -88,8 +81,8 @@
   <section class="charts-section" id="indicadores">
     <div class="charts-inner">
       <div class="section-header">
-        <h2>Indicadores</h2>
-        <p>Últimos 90 días · BCRA / INDEC</p>
+        <h2>Panel de Control</h2>
+        <p>Ajustá los parámetros de cada serie económica</p>
       </div>
       <div class="grid" id="grid"></div>
     </div>
