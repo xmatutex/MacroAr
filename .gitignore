@@ -1,0 +1,5 @@
+# Archivos con secretos y configuraciones locales
+.env
+.streamlit/
+__pycache__/
+memoria.json

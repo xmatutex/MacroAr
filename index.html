@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MacroAr — Economía Argentina</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-inner">
+      <div class="nav-logo">Macro<span>Ar</span></div>
+      <div class="nav-links">
+        <a href="#indicadores">Indicadores</a>
+        <a href="#fuentes">Fuentes</a>
+      </div>
+      <div class="nav-actions">
+        <span id="last-update">—</span>
+
+        <!-- Enlace al chat de Streamlit -->
+        <button class="btn-ghost" style="color: #10b981; font-weight: bold;" onclick="window.open('http://localhost:8501', '_blank')">🤖 Chat IA</button>
+
+        <!-- Logged out -->
+        <button class="btn-ghost" id="btn-login" onclick="openModal('login')">Iniciar sesión</button>
+        <button class="btn-primary" id="btn-signup" onclick="openModal('signup')">Registrarse gratis</button>
+
+        <!-- Logged in (hidden by default) -->
+        <span class="user-email" id="user-email"></span>
+        <button class="btn-ghost" id="btn-logout" onclick="signOut()">Salir</button>
+
+        <button class="btn-primary" onclick="loadAll()">↻ Actualizar</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Modal de Auth -->
+  <div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <div class="modal-header">
+        <h3 id="modal-title">Iniciá sesión</h3>
+        <p id="modal-subtitle">Accedé a todos los indicadores macroeconómicos</p>
+      </div>
+      <div class="modal-tabs">
+        <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">Iniciar sesión</button>
+        <button class="tab-btn" id="tab-signup" onclick="switchTab('signup')">Registrarse</button>
+      </div>
+      <div class="auth-error" id="auth-error"></div>
+      <form id="auth-form" onsubmit="handleAuth(event)">
+        <div class="form-group">
+          <label for="auth-email">Email</label>
+          <input type="email" id="auth-email" placeholder="tu@email.com" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="auth-password">Contraseña</label>
+          <input type="password" id="auth-password" placeholder="Mínimo 6 caracteres" required>
+        </div>
+        <button type="submit" class="btn-primary full-width" id="auth-submit">Ingresar</button>
+      </form>
+      <p class="modal-footer-text" id="modal-switch-text">
+        ¿No tenés cuenta?
+        <a href="#" id="modal-switch-link" onclick="switchTab('signup'); return false;">Registrate gratis</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <p class="hero-eyebrow">Datos en tiempo real</p>
+        <h1>Indicadores Macroeconómicos<br>de <em>Argentina</em></h1>
+        <p class="hero-sub">Series actualizadas desde el BCRA e INDEC</p>
+      </div>
+      <div class="hero-stats" id="hero-stats"></div>
+    </div>
+  </section>
+
+  <!-- Charts -->
+  <section class="charts-section" id="indicadores">
+    <div class="charts-inner">
+      <div class="section-header">
+        <h2>Indicadores</h2>
+        <p>Últimos 90 días · BCRA / INDEC</p>
+      </div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer id="fuentes">
+    <div class="footer-inner">
+      <div class="footer-logo">Macro<span>Ar</span></div>
+      <p class="footer-desc">Visualización de datos macroeconómicos de Argentina.</p>
+      <div class="footer-links">
+        <a href="https://www.bcra.gob.ar" target="_blank">BCRA</a>
+        <a href="https://apis.datos.gob.ar/series" target="_blank">datos.gob.ar</a>
+        <a href="https://www.indec.gob.ar" target="_blank">INDEC</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
