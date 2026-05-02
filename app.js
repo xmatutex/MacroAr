@@ -90,6 +90,53 @@ const SERIES = [
     color:     '#eab308',
     meses:     24,
     premium:   false,
+  },
+  {
+    id:        'reservas-bcra',
+    titulo:    'Reservas Internacionales',
+    categoria: 'Banco Central',
+    fuente:    'bcra',
+    serieId:   1, // El ID 1 corresponde a Reservas Internacionales
+    unidad:    'M USD',
+    color:     '#0284c7',
+    dias:      365,
+    diasFree:  90,
+    premium:   false
+  },
+  {
+    id:        'base-monetaria',
+    titulo:    'Base Monetaria',
+    categoria: 'Banco Central',
+    fuente:    'bcra',
+    serieId:   15, // ID 15: Base Monetaria - Total
+    unidad:    'M ARS',
+    color:     '#8b5cf6',
+    dias:      365,
+    diasFree:  90,
+    premium:   false
+  },
+  {
+    id:        'tasa-badlar',
+    titulo:    'Tasa BADLAR (Bancos Privados)',
+    categoria: 'Sistema Financiero',
+    fuente:    'bcra',
+    serieId:   8,  // ID 8: BADLAR en pesos de bancos privados
+    unidad:    '%',
+    color:     '#14b8a6',
+    dias:      365,
+    diasFree:  90,
+    premium:   false // Podés ponerlo en 'true' si querés que sea solo para registrados
+  },
+  {
+    id:        'tc-mayorista',
+    titulo:    'Tipo de Cambio Mayorista',
+    categoria: 'Mercado Cambiario',
+    fuente:    'bcra',
+    serieId:   4,  // ID 4: Dólar Mayorista Com. A3500
+    unidad:    '$/USD',
+    color:     '#3b82f6',
+    dias:      90,
+    premium:   false
   }
 ];
 
@@ -162,6 +209,32 @@ async function fetchIndec(serieId, meses) {
   return (json.data || [])
     .map(([fecha, valor]) => ({ fecha, valor }))
     .reverse();
+}
+
+async function fetchBcra(idVariable, dias) {
+  const hasta = new Date();
+  const desde = new Date();
+  desde.setDate(hasta.getDate() - dias);
+  
+  const format = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+  
+  const url = `https://api.bcra.gob.ar/estadisticas/v4.0/monetarias/${idVariable}?desde=${format(desde)}&hasta=${format(hasta)}`;
+  
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`BCRA HTTP ${res.status}`);
+  const json = await res.json();
+  
+  // En la API v4.0, el historial de datos viene dentro del array "detalle"
+  const detalle = json.results?.[0]?.detalle || [];
+  
+  return detalle
+    .map(d => ({ fecha: d.fecha, valor: d.valor }))
+    .sort((a, b) => a.fecha.localeCompare(b.fecha));
 }
 
 async function fetchSupabase(serieId, meses) {
@@ -657,6 +730,16 @@ async function cargarSerie(serie) {
     if (serie.fuente === 'bluelytics') {
       const dias = esLogueado ? serie.dias : (serie.diasFree ?? serie.dias);
       datos = await fetchBluelytics(serie.tipo_tc, dias);
+    } else if (serie.fuente === 'bcra') {
+      // La API del BCRA filtra por días hacia atrás
+      const dias = esLogueado ? serie.dias : (serie.diasFree ?? serie.dias);
+      const raw = await fetchBcra(serie.serieId, dias);
+      datos = serie.variacion
+        ? raw.slice(1).map((d, i) => ({
+            fecha: d.fecha,
+            valor: raw[i].valor > 0 ? +((d.valor / raw[i].valor - 1) * 100).toFixed(2) : null,
+          })).filter(d => d.valor !== null)
+        : raw;
     } else if (serie.fuente === 'supabase') {
       const meses = esLogueado ? serie.meses : (serie.mesesFree ?? serie.meses);
       const raw = await fetchSupabase(serie.serieId, meses);
@@ -764,7 +847,7 @@ function loadAll() {
   const seriesACargar = SERIES.filter(s => !(s.premium && !currentUser));
   Promise.all(seriesACargar.map(cargarSerie)).then(() => {
     document.getElementById('last-update').textContent =
-      `Actualizado: ${new Date().toLocaleTimeString('es-AR')}`;
+      `Actualizado: ${new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs`;
   });
 }
 

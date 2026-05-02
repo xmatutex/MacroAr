@@ -11,18 +11,18 @@ SUPABASE_KEY = "sb_publishable_sV_d9xpKDcoblxt2NUeFDw_AoZvTOfy"
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-def procesar_y_subir(ruta_excel, nombre_indicador, col_valor=1):
-    print(f"Procesando '{ruta_excel}' para el indicador '{nombre_indicador}'...")
+def procesar_y_subir(ruta_excel, nombre_indicador, col_valor=1, sheet_name=0, filas_saltar=4):
+    print(f"Procesando '{ruta_excel}' (hoja: {sheet_name}) para el indicador '{nombre_indicador}'...")
     
     try:
         # 2. Leer el Excel. 
         # Saltamos las primeras filas si Di Tella pone títulos largos (ajustar si es necesario)
-        # El parámetro skiprows=4 saltea las primeras 4 filas de títulos.
+        # El parámetro skiprows saltea las primeras filas de títulos.
         # Agarramos la columna 0 (fecha) y la columna indicada en col_valor.
         if ruta_excel.endswith('.xls'):
-            df = pd.read_excel(ruta_excel, skiprows=4, engine='xlrd')
+            df = pd.read_excel(ruta_excel, sheet_name=sheet_name, skiprows=filas_saltar, engine='xlrd')
         else:
-            df = pd.read_excel(ruta_excel, skiprows=4, engine='openpyxl')
+            df = pd.read_excel(ruta_excel, sheet_name=sheet_name, skiprows=filas_saltar, engine='openpyxl')
             
         df = df.iloc[:, [0, col_valor]]
         df.columns = ['fecha', 'valor']
@@ -63,4 +63,7 @@ if __name__ == "__main__":
     procesar_y_subir("Datos UTDT/Serie ICC 04-26.xls", "icc")
     # Para EI, le indicamos que la columna del valor es la 2 (Promedio)
     procesar_y_subir("Datos UTDT/Serie EI.xls", "ei", col_valor=2)
+    
+    # Para el REM del BCRA (Ejemplo: Inflación Esperada IPC)
+    procesar_y_subir("Datos BCRA/tablas-relevamiento-expectativas-mercado-mar-2026.xlsx", "rem-inflacion", col_valor=1, sheet_name='IPC', filas_saltar=5)
     
