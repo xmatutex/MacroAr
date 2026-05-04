@@ -3,39 +3,82 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MacroAr — Economía Argentina</title>
+  <title>MacroAr — Detalle del Indicador</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .detalle-container {
+      max-width: 1000px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      flex: 1; /* Para empujar el footer hacia abajo */
+    }
+    .detalle-header {
+      margin-bottom: 2rem;
+    }
+    .detalle-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 2rem;
+      color: var(--navy);
+      margin-bottom: 0.5rem;
+    }
+    .detalle-meta {
+      color: var(--muted);
+      font-size: 1rem;
+    }
+    .detalle-chart-wrap {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      padding: 2rem;
+      height: 500px;
+      position: relative;
+      margin-bottom: 2rem;
+    }
+    .detalle-info {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      padding: 2rem;
+      line-height: 1.6;
+    }
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      color: #3b82f6;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .btn-back:hover {
+      color: #2563eb;
+      text-decoration: underline;
+    }
+  </style>
 </head>
-<body>
+<body class="page-detalle">
 
   <!-- Navbar -->
   <nav class="navbar">
     <div class="nav-inner">
       <div class="nav-logo">Macro<span>Ar</span></div>
       <div class="nav-links">
-        <a href="index.html" style="color: #fff;">Inicio</a>
+        <a href="index.html">Inicio</a>
         <a href="datos.html">Datos</a>
       </div>
       <div class="nav-actions">
         <span id="last-update">—</span>
-
-        <!-- Enlace al chat de Streamlit -->
         <button class="btn-ghost" style="color: #10b981; font-weight: bold;" onclick="window.open('http://localhost:8501', '_blank')">🤖 Chat IA</button>
-
-        <!-- Logged out -->
         <button class="btn-ghost" id="btn-login" onclick="openModal('login')">Iniciar sesión</button>
         <button class="btn-primary" id="btn-signup" onclick="openModal('signup')">Registrarse gratis</button>
-
-        <!-- Logged in (hidden by default) -->
         <span class="user-email" id="user-email"></span>
         <button class="btn-ghost" id="btn-logout" onclick="signOut()">Salir</button>
-
-        <button class="btn-primary" onclick="loadAll()">↻ Actualizar</button>
       </div>
     </div>
   </nav>
@@ -71,28 +114,15 @@
     </div>
   </div>
 
-  <!-- Hero -->
-  <section class="hero">
-    <div class="hero-inner">
-      <div class="hero-text">
-        <p class="hero-eyebrow">Datos en tiempo real</p>
-        <h1>Indicadores Macroeconómicos<br>de <em>Argentina</em></h1>
-        <p class="hero-sub">Series actualizadas desde el BCRA e INDEC</p>
-      </div>
-      <div class="hero-stats" id="hero-stats"></div>
+  <!-- Contenedor Principal de la Vista Detallada -->
+  <main class="detalle-container" id="detalle-container">
+    <!-- Usa el historial del navegador para volver exactamente donde estábamos -->
+    <a href="javascript:history.back()" class="btn-back">← Volver atrás</a>
+    
+    <div id="detalle-content">
+      <p style="text-align: center; color: #64748b; padding: 2rem;">Cargando información ampliada del indicador...</p>
     </div>
-  </section>
-
-  <!-- Charts -->
-  <section class="charts-section" id="indicadores">
-    <div class="charts-inner">
-      <div class="section-header">
-        <h2>Indicadores</h2>
-        <p>Últimos 90 días · BCRA / INDEC</p>
-      </div>
-      <div class="grid" id="grid"></div>
-    </div>
-  </section>
+  </main>
 
   <!-- Footer -->
   <footer id="fuentes">

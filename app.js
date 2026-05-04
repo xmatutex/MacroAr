@@ -12,6 +12,7 @@ let currentUser = null;
 // Detectamos si estamos en la página de herramientas interactivas
 const isToolsPage = document.body.classList.contains('page-tools');
 const isDatosPage = document.body.classList.contains('page-datos');
+const isDetallePage = document.body.classList.contains('page-detalle');
 
 // ─── Configuración de series ──────────────────────────────────────────────────
 // premium: true  → requiere cuenta para ver
@@ -286,6 +287,16 @@ async function signOut() {
 // ─── Modal ────────────────────────────────────────────────────────────────────
 
 let _currentTab = 'login';
+let _modalMousedown = false;
+
+// Evita que el modal se cierre al arrastrar el cursor para seleccionar texto
+document.addEventListener('mousedown', (e) => {
+  if (e.target.closest('.modal')) _modalMousedown = true;
+});
+
+document.addEventListener('mouseup', () => {
+  setTimeout(() => { _modalMousedown = false; }, 0);
+});
 
 function openModal(tab = 'login') {
   switchTab(tab);
@@ -300,6 +311,7 @@ function closeModal() {
 }
 
 function handleOverlayClick(e) {
+  if (_modalMousedown) return; // Ignora el clic si empezó adentro de la tarjeta blanca
   if (e.target === document.getElementById('modal-overlay')) closeModal();
 }
 
@@ -390,6 +402,20 @@ function crearCard(serie) {
   div.className = 'card';
   div.id = `card-${serie.id}`;
   div.style.setProperty('--card-color', serie.color);
+
+  // Hacemos que la tarjeta sea clickeable y redirija a detalle.html
+  if (!isToolsPage) {
+    div.style.cursor = 'pointer';
+    div.title = 'Ver gráfico ampliado';
+    div.addEventListener('mouseenter', () => div.style.transform = 'translateY(-4px)');
+    div.addEventListener('mouseleave', () => div.style.transform = 'translateY(0)');
+    div.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
+    div.onclick = (e) => {
+      if (e.target.tagName.toLowerCase() === 'button' || e.target.tagName.toLowerCase() === 'input') return;
+      window.location.href = `detalle.html?id=${serie.id}`;
+    };
+  }
+
   div.innerHTML = `
     <div class="card-header">
       <h2 class="card-title">
@@ -424,6 +450,19 @@ function crearCardBloqueada(serie) {
   const div = document.createElement('div');
   div.className = 'card card-locked';
   div.style.setProperty('--card-color', serie.color);
+
+  // Hacemos que la tarjeta bloqueada también se pueda clickear
+  if (!isToolsPage) {
+    div.style.cursor = 'pointer';
+    div.addEventListener('mouseenter', () => div.style.transform = 'translateY(-4px)');
+    div.addEventListener('mouseleave', () => div.style.transform = 'translateY(0)');
+    div.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
+    div.onclick = (e) => {
+      if (e.target.tagName.toLowerCase() === 'button') return;
+      window.location.href = `detalle.html?id=${serie.id}`;
+    };
+  }
+
   div.innerHTML = `
     <div class="card-header">
       <h2 class="card-title">${serie.titulo}</h2>
@@ -558,7 +597,7 @@ function agregarDatos(datos, periodo) {
 }
 
 function setupChartControls(serie, datos) {
-  if (!isToolsPage) return; // Si no es la página de herramientas, salimos
+  if (!isToolsPage && !isDetallePage) return; // Si no es herramientas ni detalle, salimos
 
   const controlsContainer = document.getElementById(`controls-${serie.id}`);
   const aggGroup = document.getElementById(`agg-group-${serie.id}`);
@@ -615,8 +654,8 @@ function actualizarGrafico(serieId) {
 
   let processedData = rawData;
 
-  // Solo aplicar filtros si estamos en la vista de herramientas interactivas
-  if (isToolsPage) {
+  // Solo aplicar filtros si estamos en la vista de herramientas o detalle
+  if (isToolsPage || isDetallePage) {
     const aggBtn = document.querySelector(`#agg-group-${serieId} button[style*="background: rgb(226, 232, 240)"]`);
     const aggregation = aggBtn ? aggBtn.dataset.agg : 'diario';
     const startDate = document.getElementById(`start-date-${serieId}`).value;
@@ -634,7 +673,7 @@ function actualizarGrafico(serieId) {
     badge.textContent = `${ultimoValor.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${serie.unidad}`;
   }
 
-  if (isToolsPage) {
+  if (isToolsPage || isDetallePage) {
     const btnExport = document.getElementById(`btn-export-${serieId}`);
     if (btnExport) btnExport.onclick = () => exportarCSV(serie, processedData);
   }
@@ -727,13 +766,21 @@ async function cargarSerie(serie) {
     let datos;
     const esLogueado = !!currentUser;
 
+    // Por defecto en Inicio/Datos cargamos el corto plazo
+    let diasReq = esLogueado ? serie.dias : (serie.diasFree ?? serie.dias);
+    let mesesReq = esLogueado ? serie.meses : (serie.mesesFree ?? serie.meses);
+
+    // Si estamos en Detalle o Herramientas, ampliamos el historial
+    if (isToolsPage || isDetallePage) {
+      diasReq = esLogueado ? 3650 : 730; // 10 años para registrados, 2 años para gratuitos
+      mesesReq = esLogueado ? 120 : 24;
+    }
+
     if (serie.fuente === 'bluelytics') {
-      const dias = esLogueado ? serie.dias : (serie.diasFree ?? serie.dias);
-      datos = await fetchBluelytics(serie.tipo_tc, dias);
+      datos = await fetchBluelytics(serie.tipo_tc, diasReq);
     } else if (serie.fuente === 'bcra') {
       // La API del BCRA filtra por días hacia atrás
-      const dias = esLogueado ? serie.dias : (serie.diasFree ?? serie.dias);
-      const raw = await fetchBcra(serie.serieId, dias);
+      const raw = await fetchBcra(serie.serieId, diasReq);
       datos = serie.variacion
         ? raw.slice(1).map((d, i) => ({
             fecha: d.fecha,
@@ -741,8 +788,7 @@ async function cargarSerie(serie) {
           })).filter(d => d.valor !== null)
         : raw;
     } else if (serie.fuente === 'supabase') {
-      const meses = esLogueado ? serie.meses : (serie.mesesFree ?? serie.meses);
-      const raw = await fetchSupabase(serie.serieId, meses);
+      const raw = await fetchSupabase(serie.serieId, mesesReq);
       datos = serie.variacion
         ? raw.slice(1).map((d, i) => ({
             fecha: d.fecha,
@@ -750,11 +796,9 @@ async function cargarSerie(serie) {
           })).filter(d => d.valor !== null)
         : raw;
     } else if (serie.fuente.startsWith('mock')) {
-      const meses = esLogueado ? serie.meses : (serie.mesesFree ?? serie.meses);
-      datos = generarMock(serie.fuente, meses);
+      datos = generarMock(serie.fuente, mesesReq);
     } else {
-      const meses = esLogueado ? serie.meses : (serie.mesesFree ?? serie.meses);
-      const raw   = await fetchIndec(serie.serieId, meses);
+      const raw   = await fetchIndec(serie.serieId, mesesReq);
       datos = serie.variacion
         ? raw.slice(1).map((d, i) => ({
             fecha: d.fecha,
@@ -775,10 +819,10 @@ async function cargarSerie(serie) {
     actualizarHeroStat(serie, ultimo.valor);
 
     // Configurar controles y renderizar el gráfico por primera vez
-    if (isToolsPage) setupChartControls(serie, datos);
+    if (isToolsPage || isDetallePage) setupChartControls(serie, datos);
     actualizarGrafico(serie.id);
 
-    if (isToolsPage) {
+    if (isToolsPage || isDetallePage) {
       // Guardar los datos para usarlos en la calculadora y actualizarla
       if (serie.id === 'tc-oficial') { estadoMercado.oficial = ultimo.valor; actualizarCalculadora(); }
       if (serie.id === 'tc-blue') { estadoMercado.blue = ultimo.valor; actualizarCalculadora(); }
@@ -809,6 +853,85 @@ function loadAll() {
   if (catContainer) catContainer.innerHTML = '';
 
   document.getElementById('last-update').textContent = 'Actualizando…';
+
+  if (typeof isDetallePage !== 'undefined' && isDetallePage) {
+    const params = new URLSearchParams(window.location.search);
+    const serieId = params.get('id');
+    const serie = SERIES.find(s => s.id === serieId);
+    
+    const container = document.getElementById('detalle-content');
+    if (!container) return;
+
+    if (!serie) {
+      container.innerHTML = '<p style="text-align: center; padding: 2rem;">Serie no encontrada.</p>';
+      return;
+    }
+
+    if (serie.premium && !currentUser) {
+      container.innerHTML = `
+        <div class="detalle-header">
+          <h1 class="detalle-title">${serie.titulo}</h1>
+          <p class="detalle-meta">Categoría: ${serie.categoria} · Fuente: ${serie.fuente.toUpperCase()}</p>
+        </div>
+        <div class="detalle-chart-wrap" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: #f8fafc; border: 1px solid #e2e8f0;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48" style="color: #94a3b8; margin-bottom: 1rem;">
+            <rect x="3" y="11" width="18" height="11" rx="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <h2 style="margin-bottom: 0.5rem; color: #334155;">Contenido Exclusivo</h2>
+          <p style="color: #64748b; margin-bottom: 1.5rem;">Esta serie requiere una cuenta gratuita para visualizarse.</p>
+          <button class="btn-primary" onclick="openModal('signup')">Registrarse gratis</button>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="detalle-header">
+        <h1 class="detalle-title" style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+          ${serie.titulo}
+          <button id="btn-export-${serie.id}" style="display: none; font-size: 0.85rem; padding: 4px 10px; border-radius: 6px; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; color: var(--navy); font-weight: 500; font-family: inherit; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'" title="Descargar datos en CSV">⬇️ Exportar CSV</button>
+        </h1>
+        <p class="detalle-meta">
+          Categoría: ${serie.categoria} · Fuente: ${serie.fuente.toUpperCase()} · Unidad: ${serie.unidad}
+        </p>
+      </div>
+      <div class="card-controls" id="controls-${serie.id}" style="display: none; background: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-bottom: 1.5rem; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <label style="font-weight: 500; color: var(--navy);">Agrupar:</label>
+          <div class="btn-group" id="agg-group-${serie.id}"></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 280px;">
+          <label style="font-weight: 500; color: var(--navy);">Período:</label>
+          <input type="date" id="start-date-${serie.id}" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #e2e8f0; outline: none; flex: 1; font-family: inherit;">
+          <span class="muted">→</span>
+          <input type="date" id="end-date-${serie.id}" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #e2e8f0; outline: none; flex: 1; font-family: inherit;">
+        </div>
+      </div>
+      <div class="detalle-chart-wrap" id="wrap-${serie.id}">
+        <div class="skeleton" style="height: 100%; width: 100%;"></div>
+      </div>
+      <div class="detalle-info">
+        <h3 style="margin-bottom: 0.5rem; color: var(--navy); font-family: 'Poppins', sans-serif;">Sobre este indicador</h3>
+        <p style="color: #475569; margin-bottom: 1rem;">
+          Esta serie temporal muestra la evolución de <strong>${serie.titulo}</strong>. 
+          Los datos son obtenidos desde <strong>${serie.fuente.toUpperCase()}</strong>.
+          En este gráfico detallado podés observar con mayor precisión los cambios en la métrica a lo largo del período disponible.
+        </p>
+        <p style="font-size: 0.95rem; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-top: 1rem;">
+          <span class="badge muted" id="badge-${serie.id}">Cargando último valor...</span> 
+          <span style="margin-left: 0.5rem;" id="meta-${serie.id}"></span>
+        </p>
+      </div>
+    `;
+
+    cargarSerie(serie).then(() => {
+      document.getElementById('last-update').textContent =
+        `Actualizado: ${new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs`;
+    });
+
+    return;
+  }
 
   inicializarHeroStats();
 
