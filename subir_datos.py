@@ -1,7 +1,10 @@
+import sys
 import pandas as pd
 import json
 import warnings
 import os
+
+sys.stdout.reconfigure(encoding='utf-8')
 
 warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')
 
