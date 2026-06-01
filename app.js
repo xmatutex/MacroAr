@@ -610,18 +610,14 @@ function renderChart(serie, datos) {
 }
 
 function mostrarResetZoom(serieId) {
-  const btn  = document.getElementById(`btn-reset-zoom-${serieId}`);
   const hint = document.getElementById(`hint-zoom-${serieId}`);
-  if (btn)  btn.style.display = 'inline-flex';
-  if (hint) hint.style.transition = 'opacity .4s', hint.style.opacity = '0';
+  if (hint) { hint.style.transition = 'opacity .4s'; hint.style.opacity = '0'; }
 }
 
 function resetZoom(serieId) {
   const chart = charts[serieId];
   if (chart) chart.resetZoom();
-  const btn  = document.getElementById(`btn-reset-zoom-${serieId}`);
   const hint = document.getElementById(`hint-zoom-${serieId}`);
-  if (btn)  btn.style.display = 'none';
   if (hint) hint.style.opacity = '1';
 }
 
@@ -959,7 +955,6 @@ function loadAll() {
         </div>
       </div>
       <div style="position: relative;">
-        <button id="btn-reset-zoom-${serie.id}" onclick="resetZoom('${serie.id}')" title="Doble clic en el gráfico también resetea el zoom" style="display:none; position:absolute; top:12px; right:12px; z-index:10; align-items:center; gap:5px; padding:5px 14px; border-radius:20px; border:1px solid #e2e8f0; background:#fff; color:#475569; font-size:0.78rem; font-weight:500; cursor:pointer; font-family:inherit; box-shadow:0 2px 8px rgba(0,0,0,.1); transition:all .2s;" onmouseover="this.style.background='#f8fafc';this.style.color='var(--navy)'" onmouseout="this.style.background='#fff';this.style.color='#475569'">↺ Resetear zoom</button>
         <div style="position:absolute; bottom:14px; left:50%; transform:translateX(-50%); z-index:5; pointer-events:none;" id="hint-zoom-${serie.id}">
           <span style="background:rgba(15,23,42,0.55); color:#fff; font-size:0.72rem; padding:4px 10px; border-radius:20px; white-space:nowrap; backdrop-filter:blur(4px);">Scroll para zoom · Arrastrá para navegar · Doble clic para resetear</span>
         </div>
