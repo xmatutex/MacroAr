@@ -9,11 +9,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 streamlit run streamlit_app.py
 ```
 
-**Actualizar datos en Supabase desde archivos Excel:**
+**Generar JSONs de datos desde archivos Excel:**
 ```bash
 python subir_datos.py
 ```
-Requiere tener la clave `SUPABASE_KEY` en el archivo `.env`.
+Genera archivos `data/{indicador}.json` en el directorio `data/`. No requiere credenciales.
 
 **Instalar dependencias Python:**
 ```bash
@@ -36,19 +36,14 @@ pip install -r requirements.txt
 | **Bluelytics** | Dólar oficial y blue | REST público |
 | **BCRA v4.0** | Reservas, base monetaria, BADLAR, TC mayorista | `/estadisticas/v4.0/monetarias/{id}` |
 | **INDEC / datos.gob.ar** | IPC, EMAE | `/series/api/series/?ids=` |
-| **Supabase** | ICC Di Tella, EI Di Tella, indicadores REM | Tabla `Indicadores externos` |
+| **JSON local** | ICC Di Tella, EI Di Tella, indicadores REM | `data/{id}.json` generados por `subir_datos.py` |
 | **Alpha Vantage** | Precio del oro (ETF GLD) | API con clave; cachea en `localStorage` 8h |
 
-### Auth y acceso a datos
-- Auth manejado por Supabase Auth (email/password).
-- Las series con `premium: true` muestran un card bloqueado para usuarios sin cuenta.
-- Las series con `diasFree`/`mesesFree` limitan el historial visible para usuarios anónimos.
-- Usuarios registrados ven 10 años de historial en la vista detalle; anónimos ven 2 años.
-
-### Supabase
-- Tabla `Indicadores externos` con columnas: `indicador` (string), `fecha` (date), `valor` (numeric).
-- `subir_datos.py` parsea los Excel de UTDT (ICC, EI) y BCRA (REM) y hace upsert delete+insert por indicador.
-- La clave `SUPABASE_KEY` del `.env` es la **service role key** (con permisos de escritura). La clave pública `SUPABASE_KEY` en `app.js` es la anon key (solo lectura).
+### Datos locales (ICC, EI, REM)
+- `subir_datos.py` parsea los Excel de UTDT (ICC, EI) y BCRA (REM) y genera `data/{id}.json`.
+- Cada JSON es un array de `{ fecha: "YYYY-MM-DD", valor: number }` ordenado por fecha.
+- `app.js` los carga con `fetch('data/{id}.json')` — sin dependencias externas.
+- Para actualizar: bajá el Excel nuevo, corrés `python subir_datos.py`, y deployás.
 
 ### Chat IA
 - `streamlit_app.py` es una app Streamlit independiente que usa Google Gemini (`gemini-1.5-pro-latest`) como modelo.

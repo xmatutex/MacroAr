@@ -1,16 +1,7 @@
-/* global Chart, supabase */
-
-// ─── Supabase config ───────────────────────────────────────────────────────────
-// 1. Entrá a supabase.com → New project
-// 2. Settings → API → copiá Project URL y anon key
-const SUPABASE_URL = 'https://aopnwktuhczjvquofwdr.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_sV_d9xpKDcoblxt2NUeFDw_AoZvTOfy';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+/* global Chart */
 
 // Gratis en: https://www.alphavantage.co/support/#api-key
 const ALPHA_VANTAGE_KEY = 'CK3QXJKSPJVSV1W4';
-
-let currentUser = null;
 
 // Detectamos si estamos en la página de herramientas interactivas
 const isToolsPage = document.body.classList.contains('page-tools');
@@ -18,8 +9,6 @@ const isDatosPage = document.body.classList.contains('page-datos');
 const isDetallePage = document.body.classList.contains('page-detalle');
 
 // ─── Configuración de series ──────────────────────────────────────────────────
-// premium: true  → requiere cuenta para ver
-// diasFree/mesesFree → límite para usuarios sin cuenta
 
 const SERIES = [
   {
@@ -402,139 +391,13 @@ async function fetchAlphaVantage(symbol, dias, factor = 1) {
     .map(([fecha, v]) => ({ fecha, valor: +(parseFloat(v['4. close']) * factor).toFixed(2) }));
 }
 
-async function fetchSupabase(serieId, meses) {
-  const queryPromise = sb
-    .from('Indicadores externos')
-    .select('fecha, valor')
-    .eq('indicador', serieId)
-    .order('fecha', { ascending: false })
-    .limit(meses);
-
-  const timeoutPromise = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error('Sin respuesta de Supabase (8s). Verificá el proyecto en supabase.com.')), 8000)
-  );
-
-  const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
-  if (error) throw new Error(`Supabase: ${error.message}`);
-  return data.reverse();
+async function fetchLocal(serieId) {
+  const res = await fetch(`data/${serieId}.json`);
+  if (!res.ok) throw new Error(`No se encontró data/${serieId}.json`);
+  return res.json();
 }
 
 
-// ─── Auth ─────────────────────────────────────────────────────────────────────
-
-async function initAuth() {
-  const { data: { session } } = await sb.auth.getSession();
-  currentUser = session?.user ?? null;
-  updateAuthUI();
-
-  sb.auth.onAuthStateChange((_event, session) => {
-    currentUser = session?.user ?? null;
-    updateAuthUI();
-    loadAll();
-  });
-}
-
-function updateAuthUI() {
-  const loggedIn = !!currentUser;
-  document.getElementById('btn-login').style.display   = loggedIn ? 'none' : '';
-  document.getElementById('btn-signup').style.display  = loggedIn ? 'none' : '';
-  document.getElementById('btn-logout').style.display  = loggedIn ? '' : 'none';
-  document.getElementById('user-email').style.display  = loggedIn ? '' : 'none';
-  if (loggedIn) {
-    const email = currentUser.email || '';
-    document.getElementById('user-email').textContent =
-      email.length > 20 ? email.slice(0, 18) + '…' : email;
-  }
-}
-
-async function signOut() {
-  await sb.auth.signOut();
-}
-
-
-// ─── Modal ────────────────────────────────────────────────────────────────────
-
-let _currentTab = 'login';
-let _modalMousedown = false;
-
-// Evita que el modal se cierre al arrastrar el cursor para seleccionar texto
-document.addEventListener('mousedown', (e) => {
-  if (e.target.closest('.modal')) _modalMousedown = true;
-});
-
-document.addEventListener('mouseup', () => {
-  setTimeout(() => { _modalMousedown = false; }, 0);
-});
-
-function openModal(tab = 'login') {
-  switchTab(tab);
-  document.getElementById('modal-overlay').classList.add('active');
-  document.getElementById('auth-email').focus();
-}
-
-function closeModal() {
-  document.getElementById('modal-overlay').classList.remove('active');
-  document.getElementById('auth-error').textContent = '';
-  document.getElementById('auth-form').reset();
-}
-
-function handleOverlayClick(e) {
-  if (_modalMousedown) return; // Ignora el clic si empezó adentro de la tarjeta blanca
-  if (e.target === document.getElementById('modal-overlay')) closeModal();
-}
-
-function switchTab(tab) {
-  _currentTab = tab;
-  const isLogin = tab === 'login';
-
-  document.getElementById('tab-login').classList.toggle('active', isLogin);
-  document.getElementById('tab-signup').classList.toggle('active', !isLogin);
-  document.getElementById('modal-title').textContent    = isLogin ? 'Iniciá sesión' : 'Creá tu cuenta';
-  document.getElementById('modal-subtitle').textContent = isLogin
-    ? 'Accedé a todos los indicadores macroeconómicos'
-    : 'Gratis — acceso completo a todos los datos';
-  document.getElementById('auth-submit').textContent    = isLogin ? 'Ingresar' : 'Crear cuenta';
-  document.getElementById('modal-switch-text').innerHTML = isLogin
-    ? '¿No tenés cuenta? <a href="#" onclick="switchTab(\'signup\'); return false;">Registrate gratis</a>'
-    : '¿Ya tenés cuenta? <a href="#" onclick="switchTab(\'login\'); return false;">Iniciá sesión</a>';
-  document.getElementById('auth-error').textContent = '';
-}
-
-async function handleAuth(e) {
-  e.preventDefault();
-  const email    = document.getElementById('auth-email').value.trim();
-  const password = document.getElementById('auth-password').value;
-  const errEl    = document.getElementById('auth-error');
-  const btn      = document.getElementById('auth-submit');
-
-  btn.disabled = true;
-  btn.textContent = 'Cargando…';
-  errEl.textContent = '';
-
-  try {
-    let error;
-    if (_currentTab === 'login') {
-      ({ error } = await sb.auth.signInWithPassword({ email, password }));
-    } else {
-      ({ error } = await sb.auth.signUp({ email, password }));
-    }
-    if (error) throw error;
-    closeModal();
-  } catch (err) {
-    errEl.textContent = traducirError(err.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = _currentTab === 'login' ? 'Ingresar' : 'Crear cuenta';
-  }
-}
-
-function traducirError(msg) {
-  if (msg.includes('Invalid login'))      return 'Email o contraseña incorrectos.';
-  if (msg.includes('already registered')) return 'Este email ya tiene una cuenta.';
-  if (msg.includes('Password should'))    return 'La contraseña debe tener al menos 6 caracteres.';
-  if (msg.includes('Invalid email'))      return 'El email no es válido.';
-  return msg;
-}
 
 
 // ─── Hero stats ───────────────────────────────────────────────────────────────
@@ -614,43 +477,6 @@ function crearCard(serie) {
   return div;
 }
 
-function crearCardBloqueada(serie) {
-  const div = document.createElement('div');
-  div.className = 'card card-locked';
-  div.style.setProperty('--card-color', serie.color);
-
-  // Hacemos que la tarjeta bloqueada también se pueda clickear
-  if (!isToolsPage) {
-    div.style.cursor = 'pointer';
-    div.addEventListener('mouseenter', () => div.style.transform = 'translateY(-4px)');
-    div.addEventListener('mouseleave', () => div.style.transform = 'translateY(0)');
-    div.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
-    div.onclick = (e) => {
-      if (e.target.tagName.toLowerCase() === 'button') return;
-      window.location.href = `detalle.html?id=${serie.id}`;
-    };
-  }
-
-  div.innerHTML = `
-    <div class="card-header">
-      <h2 class="card-title">${serie.titulo}</h2>
-      <span class="badge muted">—</span>
-    </div>
-    <div class="card-meta">Requiere cuenta gratuita</div>
-    <div class="chart-wrap locked-wrap">
-      <div class="locked-bg"></div>
-      <div class="locked-overlay">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28">
-          <rect x="3" y="11" width="18" height="11" rx="2"/>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-        </svg>
-        <p>Contenido exclusivo para usuarios registrados</p>
-        <button class="btn-primary btn-sm" onclick="openModal('signup')">Registrarse gratis</button>
-      </div>
-    </div>
-  `;
-  return div;
-}
 
 
 // ─── Charts ───────────────────────────────────────────────────────────────────
@@ -932,16 +758,12 @@ async function cargarSerie(serie) {
 
   try {
     let datos;
-    const esLogueado = !!currentUser;
+    let diasReq = serie.dias;
+    let mesesReq = serie.meses;
 
-    // Por defecto en Inicio/Datos cargamos el corto plazo
-    let diasReq = esLogueado ? serie.dias : (serie.diasFree ?? serie.dias);
-    let mesesReq = esLogueado ? serie.meses : (serie.mesesFree ?? serie.meses);
-
-    // Si estamos en Detalle o Herramientas, ampliamos el historial
     if (isToolsPage || isDetallePage) {
-      diasReq = esLogueado ? 3650 : 730; // 10 años para registrados, 2 años para gratuitos
-      mesesReq = esLogueado ? 120 : 24;
+      diasReq  = 3650;
+      mesesReq = 120;
     }
 
     if (serie.fuente === 'bluelytics') {
@@ -956,7 +778,7 @@ async function cargarSerie(serie) {
           })).filter(d => d.valor !== null)
         : raw;
     } else if (serie.fuente === 'supabase') {
-      const raw = await fetchSupabase(serie.serieId, mesesReq);
+      const raw = await fetchLocal(serie.serieId);
       datos = serie.variacion
         ? raw.slice(1).map((d, i) => ({
             fecha: d.fecha,
@@ -984,8 +806,7 @@ async function cargarSerie(serie) {
 
     // Actualizar elementos estáticos con el último dato disponible
     const ultimo = datos[datos.length - 1];
-    const limitado = !currentUser && (serie.diasFree || serie.mesesFree);
-    meta.textContent  = `Último dato: ${formatFecha(ultimo.fecha, serie)}${limitado ? ' · historial limitado' : ''}`;
+    meta.textContent  = `Último dato: ${formatFecha(ultimo.fecha, serie)}`;
     actualizarHeroStat(serie, ultimo.valor);
 
     // Configurar controles y renderizar el gráfico por primera vez
@@ -1038,24 +859,7 @@ function loadAll() {
       return;
     }
 
-    if (serie.premium && !currentUser) {
-      container.innerHTML = `
-        <div class="detalle-header">
-          <h1 class="detalle-title">${serie.titulo}</h1>
-          <p class="detalle-meta">Categoría: ${serie.categoria} · Fuente: ${serie.fuente.toUpperCase()}</p>
-        </div>
-        <div class="detalle-chart-wrap" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: #f8fafc; border: 1px solid #e2e8f0;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48" style="color: #94a3b8; margin-bottom: 1rem;">
-            <rect x="3" y="11" width="18" height="11" rx="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-          <h2 style="margin-bottom: 0.5rem; color: #334155;">Contenido Exclusivo</h2>
-          <p style="color: #64748b; margin-bottom: 1.5rem;">Esta serie requiere una cuenta gratuita para visualizarse.</p>
-          <button class="btn-primary" onclick="openModal('signup')">Registrarse gratis</button>
-        </div>
-      `;
-      return;
-    }
+
 
     container.innerHTML = `
       <div class="detalle-header">
@@ -1121,16 +925,10 @@ function loadAll() {
       const catGrid = section.querySelector('.grid');
       const seriesCat = SERIES.filter(s => (s.categoria || 'Otros') === cat);
 
-      seriesCat.forEach(serie => {
-        const bloqueada = serie.premium && !currentUser;
-        catGrid.appendChild(bloqueada ? crearCardBloqueada(serie) : crearCard(serie));
-      });
+      seriesCat.forEach(serie => catGrid.appendChild(crearCard(serie)));
     });
   } else if (grid) {
-    SERIES.forEach(serie => {
-      const bloqueada = serie.premium && !currentUser;
-      grid.appendChild(bloqueada ? crearCardBloqueada(serie) : crearCard(serie));
-    });
+    SERIES.forEach(serie => grid.appendChild(crearCard(serie)));
 
     // Agregar la tarjeta de calculadora al final del grid de métricas
     if (isToolsPage) {
@@ -1138,12 +936,10 @@ function loadAll() {
     }
   }
 
-  const seriesACargar = SERIES.filter(s => !(s.premium && !currentUser));
-  Promise.all(seriesACargar.map(cargarSerie)).then(() => {
+  Promise.all(SERIES.map(cargarSerie)).then(() => {
     document.getElementById('last-update').textContent =
       `Actualizado: ${new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs`;
   });
 }
 
-// Iniciar auth y luego cargar datos
-initAuth().then(() => loadAll());
+loadAll();
