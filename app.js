@@ -500,6 +500,15 @@ function renderChart(serie, datos) {
   const labels = datos.map(d => formatFecha(d.fecha, serie));
   const values = datos.map(d => d.valor);
 
+  const enDetalle = isDetallePage || isToolsPage;
+
+  // Cursor grab en detalle/herramientas
+  if (enDetalle) {
+    canvas.style.cursor = 'grab';
+    canvas.addEventListener('mousedown', () => { canvas.style.cursor = 'grabbing'; });
+    canvas.addEventListener('mouseup',   () => { canvas.style.cursor = 'grab'; });
+  }
+
   charts[serie.id] = new Chart(canvas, {
     type: tipo,
     data: {
@@ -527,6 +536,20 @@ function renderChart(serie, datos) {
               `${ctx.parsed.y.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${serie.unidad}`,
           },
         },
+        zoom: {
+          zoom: {
+            wheel:  { enabled: true, speed: 0.08 },
+            pinch:  { enabled: true },
+            mode:   'x',
+            onZoomComplete: () => mostrarResetZoom(serie.id),
+          },
+          pan: {
+            enabled: enDetalle,
+            mode:    'x',
+            onPanComplete: () => mostrarResetZoom(serie.id),
+          },
+          limits: { x: { min: 'original', max: 'original' } },
+        },
       },
       scales: {
         x: {
@@ -548,6 +571,18 @@ function renderChart(serie, datos) {
       },
     },
   });
+}
+
+function mostrarResetZoom(serieId) {
+  const btn = document.getElementById(`btn-reset-zoom-${serieId}`);
+  if (btn) btn.style.display = 'inline-flex';
+}
+
+function resetZoom(serieId) {
+  const chart = charts[serieId];
+  if (chart) chart.resetZoom();
+  const btn = document.getElementById(`btn-reset-zoom-${serieId}`);
+  if (btn) btn.style.display = 'none';
 }
 
 
@@ -883,8 +918,11 @@ function loadAll() {
           <input type="date" id="end-date-${serie.id}" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #e2e8f0; outline: none; flex: 1; font-family: inherit;">
         </div>
       </div>
-      <div class="detalle-chart-wrap" id="wrap-${serie.id}">
-        <div class="skeleton" style="height: 100%; width: 100%;"></div>
+      <div style="position: relative;">
+        <button id="btn-reset-zoom-${serie.id}" onclick="resetZoom('${serie.id}')" style="display:none; position:absolute; top:10px; right:10px; z-index:10; align-items:center; gap:4px; padding:5px 12px; border-radius:6px; border:1px solid #cbd5e1; background:#fff; color:var(--navy); font-size:0.8rem; font-weight:500; cursor:pointer; font-family:inherit; box-shadow:0 1px 3px rgba(0,0,0,.1); transition:background .15s;">↺ Resetear zoom</button>
+        <div class="detalle-chart-wrap" id="wrap-${serie.id}">
+          <div class="skeleton" style="height: 100%; width: 100%;"></div>
+        </div>
       </div>
       <div class="detalle-info">
         <h3 style="margin-bottom: 0.5rem; color: var(--navy); font-family: 'Poppins', sans-serif;">Sobre este indicador</h3>
@@ -893,9 +931,10 @@ function loadAll() {
           Los datos son obtenidos desde <strong>${serie.fuente.toUpperCase()}</strong>.
           En este gráfico detallado podés observar con mayor precisión los cambios en la métrica a lo largo del período disponible.
         </p>
-        <p style="font-size: 0.95rem; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-top: 1rem;">
-          <span class="badge muted" id="badge-${serie.id}">Cargando último valor...</span> 
-          <span style="margin-left: 0.5rem;" id="meta-${serie.id}"></span>
+        <p style="font-size: 0.95rem; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-top: 1rem; display:flex; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+          <span class="badge muted" id="badge-${serie.id}">Cargando último valor...</span>
+          <span id="meta-${serie.id}"></span>
+          <span style="margin-left:auto; font-size:0.8rem; color:#94a3b8;">🖱 Scroll para zoom · Arrastrá para desplazarte</span>
         </p>
       </div>
     `;
