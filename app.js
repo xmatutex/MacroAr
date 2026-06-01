@@ -7,6 +7,9 @@ const SUPABASE_URL = 'https://aopnwktuhczjvquofwdr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_sV_d9xpKDcoblxt2NUeFDw_AoZvTOfy';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Gratis en: https://www.alphavantage.co/support/#api-key
+const ALPHA_VANTAGE_KEY = 'CK3QXJKSPJVSV1W4';
+
 let currentUser = null;
 
 // Detectamos si estamos en la página de herramientas interactivas
@@ -237,19 +240,39 @@ const SERIES = [
     color:     '#3b82f6',
     dias:      90,
     premium:   false
-  }
+  },
+  {
+    id:        'oro-usd',
+    titulo:    'Precio del Oro',
+    categoria: 'Commodities',
+    fuente:    'alphavantage',
+    serieId:   'GLD',   // ETF que rastrea oro; GLD ≈ 0.0966 oz
+    factor:    10.35,   // convierte precio GLD → USD/oz aprox
+    unidad:    'USD/oz',
+    color:     '#d97706',
+    dias:      365,
+    diasFree:  180,
+    premium:   false,
+  },
 ];
 
 
 // ─── Utilidades ───────────────────────────────────────────────────────────────
 
-function formatFecha(fechaStr) {
+function formatFecha(fechaStr, serie = null) {
   if (!fechaStr) return '—';
+
+  // Limpiamos la hora/zona horaria si es que viene de la base de datos (ej: 2026-04-30T00:00:00+00)
+  fechaStr = fechaStr.split('T')[0];
+
   // Nuevos formatos de agregación
   if (fechaStr.includes('-Q')) return fechaStr.replace('-Q', ' T'); // "2023-Q1" -> "2023 T1"
   if (/^\d{4}$/.test(fechaStr)) return fechaStr; // "2023"
 
-  if (fechaStr.length === 7) {
+  // Verificamos si es una serie del REM para forzar la vista mensual
+  const esRem = serie && serie.id && serie.id.startsWith('rem-');
+
+  if (fechaStr.length === 7 || esRem) {
     const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
     const [y, m] = fechaStr.split('-');
     return `${meses[parseInt(m, 10) - 1]} ${y}`;
@@ -287,6 +310,7 @@ function generarMock(tipo, meses) {
 // ─── Fetch APIs ───────────────────────────────────────────────────────────────
 
 let _bluelyticsCache = null;
+let _alphaVantageCache = {};
 
 async function fetchBluelytics(tipo, dias) {
   if (!_bluelyticsCache) {
@@ -337,15 +361,60 @@ async function fetchBcra(idVariable, dias) {
     .sort((a, b) => a.fecha.localeCompare(b.fecha));
 }
 
+async function fetchAlphaVantage(symbol, dias, factor = 1) {
+  if (ALPHA_VANTAGE_KEY === 'TU_CLAVE_AQUI') {
+    throw new Error('Configurá tu clave gratuita de Alpha Vantage en app.js.');
+  }
+  const LS_KEY = `av_${symbol}`;
+  const LS_TTL = 8 * 60 * 60 * 1000; // 8 horas
+
+  // Intentar cargar desde localStorage antes de ir a la API
+  if (!_alphaVantageCache[symbol]) {
+    try {
+      const cached = JSON.parse(localStorage.getItem(LS_KEY));
+      if (cached && Date.now() - cached.ts < LS_TTL) {
+        _alphaVantageCache[symbol] = cached.data;
+      }
+    } catch (e) { /* ignora errores de localStorage */ }
+  }
+
+  if (!_alphaVantageCache[symbol]) {
+    const outputsize = dias > 100 ? 'full' : 'compact';
+    const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&outputsize=${outputsize}&apikey=${ALPHA_VANTAGE_KEY}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Alpha Vantage HTTP ${res.status}`);
+    const json = await res.json();
+    if (json['Note']) throw new Error('Límite por minuto (5 req/min). Esperá un momento.');
+    if (json['Information']) throw new Error('Límite diario alcanzado (25 req/día). Intentá mañana.');
+    if (json['Error Message']) throw new Error('Símbolo no encontrado en Alpha Vantage.');
+    const timeSeries = json['Time Series (Daily)'];
+    if (!timeSeries) throw new Error('Sin datos de Alpha Vantage.');
+    _alphaVantageCache[symbol] = timeSeries;
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify({ ts: Date.now(), data: timeSeries }));
+    } catch (e) { /* ignora si el storage está lleno */ }
+  }
+
+  const desde = isoHace(dias);
+  return Object.entries(_alphaVantageCache[symbol])
+    .filter(([fecha]) => fecha >= desde)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([fecha, v]) => ({ fecha, valor: +(parseFloat(v['4. close']) * factor).toFixed(2) }));
+}
+
 async function fetchSupabase(serieId, meses) {
-  // Lee los datos reales desde tu propia base de datos
-  const { data, error } = await sb
+  const queryPromise = sb
     .from('Indicadores externos')
     .select('fecha, valor')
     .eq('indicador', serieId)
     .order('fecha', { ascending: false })
     .limit(meses);
 
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Sin respuesta de Supabase (8s). Verificá el proyecto en supabase.com.')), 8000)
+  );
+
+  const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
   if (error) throw new Error(`Supabase: ${error.message}`);
   return data.reverse();
 }
@@ -602,7 +671,7 @@ function renderChart(serie, datos) {
   }
 
   const tipo   = serie.tipo || 'line';
-  const labels = datos.map(d => formatFecha(d.fecha));
+  const labels = datos.map(d => formatFecha(d.fecha, serie));
   const values = datos.map(d => d.valor);
 
   charts[serie.id] = new Chart(canvas, {
@@ -894,6 +963,8 @@ async function cargarSerie(serie) {
             valor: raw[i].valor > 0 ? +((d.valor / raw[i].valor - 1) * 100).toFixed(2) : null,
           })).filter(d => d.valor !== null)
         : raw;
+    } else if (serie.fuente === 'alphavantage') {
+      datos = await fetchAlphaVantage(serie.serieId, diasReq, serie.factor ?? 1);
     } else if (serie.fuente.startsWith('mock')) {
       datos = generarMock(serie.fuente, mesesReq);
     } else {
@@ -914,7 +985,7 @@ async function cargarSerie(serie) {
     // Actualizar elementos estáticos con el último dato disponible
     const ultimo = datos[datos.length - 1];
     const limitado = !currentUser && (serie.diasFree || serie.mesesFree);
-    meta.textContent  = `Último dato: ${formatFecha(ultimo.fecha)}${limitado ? ' · historial limitado' : ''}`;
+    meta.textContent  = `Último dato: ${formatFecha(ultimo.fecha, serie)}${limitado ? ' · historial limitado' : ''}`;
     actualizarHeroStat(serie, ultimo.valor);
 
     // Configurar controles y renderizar el gráfico por primera vez
@@ -944,6 +1015,7 @@ async function cargarSerie(serie) {
 
 function loadAll() {
   _bluelyticsCache = null;
+  _alphaVantageCache = {};
 
   const grid = document.getElementById('grid');
   const catContainer = document.getElementById('categories-container');
