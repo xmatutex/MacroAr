@@ -483,6 +483,26 @@ function crearCard(serie) {
 
 const charts = {};
 
+// Plugin inline: dibuja crosshair vertical + punto de valor al hover
+const crosshairPlugin = {
+  id: 'crosshair',
+  afterDraw(chart) {
+    const active = chart.tooltip._active;
+    if (!active || !active.length) return;
+    const { ctx, chartArea: { top, bottom } } = chart;
+    const x = active[0].element.x;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x, top);
+    ctx.lineTo(x, bottom);
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(100,116,139,0.35)';
+    ctx.setLineDash([5, 4]);
+    ctx.stroke();
+    ctx.restore();
+  },
+};
+
 function renderChart(serie, datos) {
   const wrap = document.getElementById(`wrap-${serie.id}`);
   wrap.innerHTML = '<canvas></canvas>';
@@ -496,21 +516,22 @@ function renderChart(serie, datos) {
     return;
   }
 
-  const tipo   = serie.tipo || 'line';
-  const labels = datos.map(d => formatFecha(d.fecha, serie));
-  const values = datos.map(d => d.valor);
-
+  const tipo      = serie.tipo || 'line';
+  const labels    = datos.map(d => formatFecha(d.fecha, serie));
+  const values    = datos.map(d => d.valor);
   const enDetalle = isDetallePage || isToolsPage;
 
-  // Cursor grab en detalle/herramientas
   if (enDetalle) {
     canvas.style.cursor = 'grab';
     canvas.addEventListener('mousedown', () => { canvas.style.cursor = 'grabbing'; });
     canvas.addEventListener('mouseup',   () => { canvas.style.cursor = 'grab'; });
+    // Doble clic para resetear zoom
+    canvas.addEventListener('dblclick', () => resetZoom(serie.id));
   }
 
   charts[serie.id] = new Chart(canvas, {
-    type: tipo,
+    type:    tipo,
+    plugins: enDetalle ? [crosshairPlugin] : [],
     data: {
       labels,
       datasets: [{
@@ -520,6 +541,10 @@ function renderChart(serie, datos) {
         borderWidth:     tipo === 'bar' ? 0 : 2,
         borderRadius:    tipo === 'bar' ? 3 : 0,
         pointRadius:     0,
+        pointHoverRadius: enDetalle ? 5 : 0,
+        pointHoverBackgroundColor: serie.color,
+        pointHoverBorderColor:     '#fff',
+        pointHoverBorderWidth:     2,
         tension:         0.3,
         fill:            tipo !== 'bar',
       }],
@@ -528,24 +553,35 @@ function renderChart(serie, datos) {
       responsive:          true,
       maintainAspectRatio: false,
       animation:           { duration: 400 },
+      interaction: {
+        mode:      'index',
+        intersect: false,
+      },
       plugins: {
         legend: { display: false },
         tooltip: {
+          displayColors: false,
+          backgroundColor: 'rgba(15,23,42,0.85)',
+          padding:         10,
+          cornerRadius:    8,
+          titleFont:       { size: 11, weight: '500' },
+          bodyFont:        { size: 13, weight: '600' },
           callbacks: {
+            title: ctx => ctx[0].label,
             label: ctx =>
               `${ctx.parsed.y.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${serie.unidad}`,
           },
         },
         zoom: {
           zoom: {
-            wheel:  { enabled: true, speed: 0.08 },
-            pinch:  { enabled: true },
-            mode:   'x',
+            wheel:          { enabled: true, speed: 0.12 },
+            pinch:          { enabled: true },
+            mode:           'x',
             onZoomComplete: () => mostrarResetZoom(serie.id),
           },
           pan: {
-            enabled: enDetalle,
-            mode:    'x',
+            enabled:       enDetalle,
+            mode:          'x',
             onPanComplete: () => mostrarResetZoom(serie.id),
           },
           limits: { x: { min: 'original', max: 'original' } },
@@ -574,15 +610,19 @@ function renderChart(serie, datos) {
 }
 
 function mostrarResetZoom(serieId) {
-  const btn = document.getElementById(`btn-reset-zoom-${serieId}`);
-  if (btn) btn.style.display = 'inline-flex';
+  const btn  = document.getElementById(`btn-reset-zoom-${serieId}`);
+  const hint = document.getElementById(`hint-zoom-${serieId}`);
+  if (btn)  btn.style.display = 'inline-flex';
+  if (hint) hint.style.transition = 'opacity .4s', hint.style.opacity = '0';
 }
 
 function resetZoom(serieId) {
   const chart = charts[serieId];
   if (chart) chart.resetZoom();
-  const btn = document.getElementById(`btn-reset-zoom-${serieId}`);
-  if (btn) btn.style.display = 'none';
+  const btn  = document.getElementById(`btn-reset-zoom-${serieId}`);
+  const hint = document.getElementById(`hint-zoom-${serieId}`);
+  if (btn)  btn.style.display = 'none';
+  if (hint) hint.style.opacity = '1';
 }
 
 
@@ -919,7 +959,10 @@ function loadAll() {
         </div>
       </div>
       <div style="position: relative;">
-        <button id="btn-reset-zoom-${serie.id}" onclick="resetZoom('${serie.id}')" style="display:none; position:absolute; top:10px; right:10px; z-index:10; align-items:center; gap:4px; padding:5px 12px; border-radius:6px; border:1px solid #cbd5e1; background:#fff; color:var(--navy); font-size:0.8rem; font-weight:500; cursor:pointer; font-family:inherit; box-shadow:0 1px 3px rgba(0,0,0,.1); transition:background .15s;">↺ Resetear zoom</button>
+        <button id="btn-reset-zoom-${serie.id}" onclick="resetZoom('${serie.id}')" title="Doble clic en el gráfico también resetea el zoom" style="display:none; position:absolute; top:12px; right:12px; z-index:10; align-items:center; gap:5px; padding:5px 14px; border-radius:20px; border:1px solid #e2e8f0; background:#fff; color:#475569; font-size:0.78rem; font-weight:500; cursor:pointer; font-family:inherit; box-shadow:0 2px 8px rgba(0,0,0,.1); transition:all .2s;" onmouseover="this.style.background='#f8fafc';this.style.color='var(--navy)'" onmouseout="this.style.background='#fff';this.style.color='#475569'">↺ Resetear zoom</button>
+        <div style="position:absolute; bottom:14px; left:50%; transform:translateX(-50%); z-index:5; pointer-events:none;" id="hint-zoom-${serie.id}">
+          <span style="background:rgba(15,23,42,0.55); color:#fff; font-size:0.72rem; padding:4px 10px; border-radius:20px; white-space:nowrap; backdrop-filter:blur(4px);">Scroll para zoom · Arrastrá para navegar · Doble clic para resetear</span>
+        </div>
         <div class="detalle-chart-wrap" id="wrap-${serie.id}">
           <div class="skeleton" style="height: 100%; width: 100%;"></div>
         </div>
@@ -934,7 +977,6 @@ function loadAll() {
         <p style="font-size: 0.95rem; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-top: 1rem; display:flex; align-items:center; flex-wrap:wrap; gap:0.75rem;">
           <span class="badge muted" id="badge-${serie.id}">Cargando último valor...</span>
           <span id="meta-${serie.id}"></span>
-          <span style="margin-left:auto; font-size:0.8rem; color:#94a3b8;">🖱 Scroll para zoom · Arrastrá para desplazarte</span>
         </p>
       </div>
     `;
