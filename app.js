@@ -1247,8 +1247,6 @@ function loadAll() {
   if (grid) grid.innerHTML = '';
   if (catContainer) catContainer.innerHTML = '';
 
-  document.getElementById('last-update').textContent = 'Actualizando…';
-
   if (typeof isDetallePage !== 'undefined' && isDetallePage) {
     const params = new URLSearchParams(window.location.search);
     const serieId = params.get('id');
@@ -1310,10 +1308,7 @@ function loadAll() {
       </div>
     `;
 
-    cargarSerie(serie).then(() => {
-      document.getElementById('last-update').textContent =
-        `Actualizado: ${new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs`;
-    });
+    cargarSerie(serie);
 
     return;
   }
@@ -1353,10 +1348,7 @@ function loadAll() {
     }
   }
 
-  Promise.all(seriesAMostrar.map(cargarSerie)).then(() => {
-    document.getElementById('last-update').textContent =
-      `Actualizado: ${new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs`;
-  });
+  Promise.all(seriesAMostrar.map(cargarSerie));
 }
 
 // Tarjeta de acceso al catálogo completo (solo en el Inicio)
