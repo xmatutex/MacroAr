@@ -61,7 +61,7 @@ const SERIES = [
     },
     anioBase: 2004,
     unidad:   'índice',
-    color:    '#7c3aed',
+    color:    '#0e7490',
     meses:    36,
     premium:  false,
     emaeMultivista: true,
@@ -87,7 +87,7 @@ const SERIES = [
     fuente:    'supabase',
     serieId:   'ei',
     unidad:    '%',
-    color:     '#eab308',
+    color:     '#ca8a04',
     meses:     24,
     premium:   false,
   },
@@ -153,7 +153,7 @@ const SERIES = [
     fuente:    'supabase',
     serieId:   'rem-expo',
     unidad:    'M USD',
-    color:     '#8b5cf6',
+    color:     '#0891b2',
     meses:     24,
     premium:   false
   },
@@ -164,7 +164,7 @@ const SERIES = [
     fuente:    'supabase',
     serieId:   'rem-impo',
     unidad:    'M USD',
-    color:     '#d946ef',
+    color:     '#0369a1',
     meses:     24,
     premium:   false
   },
@@ -210,7 +210,7 @@ const SERIES = [
     fuente:    'bcra',
     serieId:   15, // ID 15: Base Monetaria - Total
     unidad:    'M ARS',
-    color:     '#8b5cf6',
+    color:     '#1e40af',
     dias:      365,
     diasFree:  90,
     premium:   false
@@ -270,7 +270,7 @@ const SERIES = [
     fuente:    'local',
     serieId:   'merval',
     unidad:    'ARS',
-    color:     '#8b5cf6',
+    color:     '#0d9488',
     dias:      365,
     premium:   false,
   },
