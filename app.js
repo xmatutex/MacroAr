@@ -65,6 +65,7 @@ const SERIES = [
     meses:    36,
     premium:  false,
     emaeMultivista: true,
+    mensual:  true,
   },
   {
     id:        'icc-ditella',
@@ -311,10 +312,10 @@ function formatFecha(fechaStr, serie = null) {
   if (fechaStr.includes('-Q')) return fechaStr.replace('-Q', ' T'); // "2023-Q1" -> "2023 T1"
   if (/^\d{4}$/.test(fechaStr)) return fechaStr; // "2023"
 
-  // Verificamos si es una serie del REM para forzar la vista mensual
-  const esRem = serie && serie.id && serie.id.startsWith('rem-');
+  // Series mensuales (REM y EMAE): mostrar "mes año" en vez de día/mes/año
+  const esMensual = serie && ((serie.id && serie.id.startsWith('rem-')) || serie.mensual);
 
-  if (fechaStr.length === 7 || esRem) {
+  if (fechaStr.length === 7 || esMensual) {
     const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
     const [y, m] = fechaStr.split('-');
     return `${meses[parseInt(m, 10) - 1]} ${y}`;
@@ -1204,6 +1205,10 @@ async function cargarSerie(serie) {
     meta.textContent  = `Último dato: ${formatFecha(ultimo.fecha, serie)}`;
     actualizarHeroStat(serie, ultimo.valor);
 
+    // Vista detalle: mostrar la fecha del último registro debajo de la categoría
+    const ultimaFechaEl = document.getElementById(`ultima-fecha-${serie.id}`);
+    if (ultimaFechaEl) ultimaFechaEl.textContent = `Último registro: ${formatFecha(ultimo.fecha, serie)}`;
+
     // Configurar controles y renderizar el gráfico por primera vez
     if (isToolsPage || isDetallePage) setupChartControls(serie, datos);
     actualizarGrafico(serie.id);
@@ -1269,6 +1274,7 @@ function loadAll() {
         <p class="detalle-meta">
           Categoría: ${serie.categoria} · Fuente: ${serie.fuente.toUpperCase()}${serie.anioBase ? ` · Base ${serie.anioBase}=100` : ` · Unidad: ${serie.unidad}`}
         </p>
+        <p class="detalle-meta" id="ultima-fecha-${serie.id}" style="font-size:0.9rem; color:#94a3b8; margin-top:0.25rem;">Último registro: —</p>
       </div>
       <div class="card-controls" id="controls-${serie.id}" style="display: none; background: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-bottom: 1.5rem; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
         <div style="display: flex; align-items: center; gap: 0.5rem;">
