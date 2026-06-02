@@ -1,8 +1,8 @@
 :root {
-  --navy:       #0d1b2e;
-  --navy-2:     #152740;
-  --teal:       #00c9b1;
-  --teal-dark:  #009e8e;
+  --navy:       #1c3c63;   /* celeste oscuro (fondo) */
+  --navy-2:     #275086;
+  --teal:       #74ACDF;   /* celeste bandera (acento) */
+  --teal-dark:  #5a96cf;
   --bg:         #f0f4f8;
   --card:       #ffffff;
   --text:       #1e293b;
@@ -43,7 +43,7 @@ body {
 .nav-logo {
   font-family: 'Poppins', sans-serif;
   font-size: 1.3rem;
-  font-weight: 700;
+  font-weight: 800;
   color: #fff;
   letter-spacing: -0.5px;
   flex-shrink: 0;
