@@ -13,7 +13,13 @@ streamlit run streamlit_app.py
 ```bash
 python subir_datos.py
 ```
-Genera archivos `data/{indicador}.json` en el directorio `data/`. No requiere credenciales.
+Genera archivos `data/{indicador}.json` (ICC, EI, REM) en el directorio `data/`. No requiere credenciales.
+
+**Traer datos de mercado (Merval) desde Yahoo Finance:**
+```bash
+python fetch_mercados.py
+```
+Genera `data/merval.json`. Se usa porque Yahoo Finance bloquea CORS desde el browser.
 
 **Instalar dependencias Python:**
 ```bash
@@ -36,8 +42,11 @@ pip install -r requirements.txt
 | **Bluelytics** | Dólar oficial y blue | REST público |
 | **BCRA v4.0** | Reservas, base monetaria, BADLAR, TC mayorista | `/estadisticas/v4.0/monetarias/{id}` |
 | **INDEC / datos.gob.ar** | IPC, EMAE | `/series/api/series/?ids=` |
-| **JSON local** | ICC Di Tella, EI Di Tella, indicadores REM | `data/{id}.json` generados por `subir_datos.py` |
+| **JSON local** | ICC Di Tella, EI Di Tella, indicadores REM, Merval | `data/{id}.json` generados por `subir_datos.py` y `fetch_mercados.py` |
 | **Alpha Vantage** | Precio del oro (ETF GLD) | API con clave; cachea en `localStorage` 8h |
+| **ArgentinaDatos** | Riesgo País (EMBI+) | REST público con CORS, `api.argentinadatos.com` |
+
+**Nota CORS:** Yahoo Finance (Merval) bloquea CORS desde el browser, por eso se trae del lado servidor con `fetch_mercados.py` a `data/merval.json` y se consume con `fuente: 'local'`.
 
 ### Datos locales (ICC, EI, REM)
 - `subir_datos.py` parsea los Excel de UTDT (ICC, EI) y BCRA (REM) y genera `data/{id}.json`.

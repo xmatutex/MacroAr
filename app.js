@@ -32,7 +32,7 @@ const SERIES = [
     unidad:  '$/USD',
     color:   '#059669',
     dias:    90,
-    premium: true,
+    premium: false,
   },
   {
     id:        'inflacion',
@@ -57,7 +57,7 @@ const SERIES = [
     unidad:   'índice',
     color:    '#7c3aed',
     meses:    36,
-    premium:  true,
+    premium:  false,
     variacion: false,
   },
   {
@@ -235,12 +235,79 @@ const SERIES = [
     titulo:    'Precio del Oro',
     categoria: 'Commodities',
     fuente:    'alphavantage',
-    serieId:   'GLD',   // ETF que rastrea oro; GLD ≈ 0.0966 oz
-    factor:    10.35,   // convierte precio GLD → USD/oz aprox
+    serieId:   'GLD',
+    factor:    10.35,
     unidad:    'USD/oz',
     color:     '#d97706',
     dias:      365,
-    diasFree:  180,
+    premium:   false,
+  },
+  // ─── Nuevos indicadores ───────────────────────────────────────────────────────
+  {
+    id:        'riesgo-pais',
+    titulo:    'Riesgo País (EMBI+)',
+    categoria: 'Mercado de Capitales',
+    fuente:    'argentinadatos',
+    serieId:   'finanzas/indices/riesgo-pais',
+    unidad:    'puntos básicos',
+    color:     '#ef4444',
+    dias:      730,
+    premium:   false,
+  },
+  {
+    id:        'merval-ars',
+    titulo:    'Merval',
+    categoria: 'Mercado de Capitales',
+    fuente:    'local',
+    serieId:   'merval',
+    unidad:    'ARS',
+    color:     '#8b5cf6',
+    dias:      365,
+    premium:   false,
+  },
+  {
+    id:        'inflacion-anual',
+    titulo:    'Inflación Interanual (IPC)',
+    categoria: 'Precios e Inflación',
+    fuente:    'bcra',
+    serieId:   28,
+    unidad:    '%',
+    color:     '#be123c',
+    dias:      730,
+    premium:   false,
+    tipo:      'bar',
+  },
+  {
+    id:        'tasa-plazo-fijo',
+    titulo:    'Tasa Plazo Fijo (30 días)',
+    categoria: 'Sistema Financiero',
+    fuente:    'bcra',
+    serieId:   12,
+    unidad:    '% anual',
+    color:     '#f97316',
+    dias:      365,
+    premium:   false,
+  },
+  {
+    id:        'banda-inferior',
+    titulo:    'Banda Cambiaria Inferior',
+    categoria: 'Mercado Cambiario',
+    fuente:    'bcra',
+    serieId:   1187,
+    unidad:    '$/USD',
+    color:     '#16a34a',
+    dias:      180,
+    premium:   false,
+  },
+  {
+    id:        'banda-superior',
+    titulo:    'Banda Cambiaria Superior',
+    categoria: 'Mercado Cambiario',
+    fuente:    'bcra',
+    serieId:   1188,
+    unidad:    '$/USD',
+    color:     '#dc2626',
+    dias:      180,
     premium:   false,
   },
 ];
@@ -391,10 +458,24 @@ async function fetchAlphaVantage(symbol, dias, factor = 1) {
     .map(([fecha, v]) => ({ fecha, valor: +(parseFloat(v['4. close']) * factor).toFixed(2) }));
 }
 
-async function fetchLocal(serieId) {
+async function fetchLocal(serieId, dias = null) {
   const res = await fetch(`data/${serieId}.json`);
   if (!res.ok) throw new Error(`No se encontró data/${serieId}.json`);
-  return res.json();
+  const data = await res.json();
+  if (dias == null) return data;
+  const desde = isoHace(dias);
+  return data.filter(d => (d.fecha || '').split('T')[0] >= desde);
+}
+
+async function fetchArgentinaDatos(endpoint, dias) {
+  const res = await fetch(`https://api.argentinadatos.com/v1/${endpoint}`);
+  if (!res.ok) throw new Error(`ArgentinaDatos HTTP ${res.status}`);
+  const data = await res.json();
+  const desde = isoHace(dias);
+  return data
+    .filter(d => d.fecha >= desde)
+    .sort((a, b) => a.fecha.localeCompare(b.fecha))
+    .map(d => ({ fecha: d.fecha, valor: d.valor }));
 }
 
 
@@ -619,6 +700,26 @@ function resetZoom(serieId) {
   if (chart) chart.resetZoom();
   const hint = document.getElementById(`hint-zoom-${serieId}`);
   if (hint) hint.style.opacity = '1';
+}
+
+function descargarPNG(serieId, titulo) {
+  const chart = charts[serieId];
+  if (!chart) return;
+  // Fondo blanco: el canvas es transparente por defecto y queda feo en PNG
+  const canvas = chart.canvas;
+  const tmp = document.createElement('canvas');
+  tmp.width = canvas.width;
+  tmp.height = canvas.height;
+  const ctx = tmp.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, tmp.width, tmp.height);
+  ctx.drawImage(canvas, 0, 0);
+
+  const link = document.createElement('a');
+  const slug = (titulo || serieId).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  link.download = `macroar-${slug}.png`;
+  link.href = tmp.toDataURL('image/png');
+  link.click();
 }
 
 
@@ -858,6 +959,10 @@ async function cargarSerie(serie) {
         : raw;
     } else if (serie.fuente === 'alphavantage') {
       datos = await fetchAlphaVantage(serie.serieId, diasReq, serie.factor ?? 1);
+    } else if (serie.fuente === 'argentinadatos') {
+      datos = await fetchArgentinaDatos(serie.serieId, diasReq);
+    } else if (serie.fuente === 'local') {
+      datos = await fetchLocal(serie.serieId, diasReq);
     } else if (serie.fuente.startsWith('mock')) {
       datos = generarMock(serie.fuente, mesesReq);
     } else {
@@ -891,6 +996,9 @@ async function cargarSerie(serie) {
 
       const btnExport = document.getElementById(`btn-export-${serie.id}`);
       if (btnExport) btnExport.style.display = 'inline-block';
+
+      const btnPng = document.getElementById(`btn-png-${serie.id}`);
+      if (btnPng) btnPng.style.display = 'inline-block';
     }
 
   } catch (err) {
@@ -937,6 +1045,7 @@ function loadAll() {
         <h1 class="detalle-title" style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
           ${serie.titulo}
           <button id="btn-export-${serie.id}" style="display: none; font-size: 0.85rem; padding: 4px 10px; border-radius: 6px; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; color: var(--navy); font-weight: 500; font-family: inherit; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'" title="Descargar datos en CSV">⬇️ Exportar CSV</button>
+          <button id="btn-png-${serie.id}" style="display: none; font-size: 0.85rem; padding: 4px 10px; border-radius: 6px; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; color: var(--navy); font-weight: 500; font-family: inherit; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'" title="Descargar gráfico como imagen" onclick="descargarPNG('${serie.id}', '${serie.titulo}')">🖼️ Descargar PNG</button>
         </h1>
         <p class="detalle-meta">
           Categoría: ${serie.categoria} · Fuente: ${serie.fuente.toUpperCase()} · Unidad: ${serie.unidad}
