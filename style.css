@@ -1,12 +1,12 @@
 :root {
   --navy:       #1c3c63;   /* celeste oscuro (fondo) */
-  --navy-2:     #275086;
+  --navy-2:     #21436f;   /* end del degradado, oscurecido para mejor contraste */
   --teal:       #74ACDF;   /* celeste bandera (acento) */
   --teal-dark:  #5a96cf;
   --bg:         #f0f4f8;
   --card:       #ffffff;
   --text:       #1e293b;
-  --muted:      #64748b;
+  --muted:      #5b6675;   /* gris tenue oscurecido para pasar contraste 4.5:1 */
   --border:     #e2e8f0;
 }
 
@@ -141,7 +141,7 @@ body {
   font-weight: 600;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: var(--teal);
+  color: #9fc6ea;   /* celeste más claro: pasa 4.5:1 en todo el degradado */
   margin-bottom: 0.6rem;
 }
 
