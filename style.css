@@ -56,7 +56,7 @@ body {
   flex: 1;
 }
 .nav-links a {
-  color: rgba(255,255,255,0.55);
+  color: rgba(255,255,255,0.75);
   text-decoration: none;
   font-size: 0.88rem;
   font-weight: 500;
@@ -159,7 +159,7 @@ body {
 
 .hero-sub {
   font-size: 0.95rem;
-  color: rgba(255,255,255,0.5);
+  color: rgba(255,255,255,0.75);
   margin-top: 0.75rem;
 }
 
@@ -185,7 +185,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.6px;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.45);
+  color: rgba(255,255,255,0.75);
   margin-bottom: 0.45rem;
 }
 
@@ -200,7 +200,7 @@ body {
 
 .hero-stat-unit {
   font-size: 0.7rem;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.7);
   margin-top: 0.3rem;
 }
 
@@ -318,7 +318,7 @@ body {
 /* ── Footer ──────────────────────────────────────────────── */
 footer {
   background: var(--navy);
-  color: rgba(255,255,255,0.5);
+  color: rgba(255,255,255,0.7);
   padding: 2rem 1.5rem;
 }
 
@@ -350,7 +350,7 @@ footer {
   gap: 1.25rem;
 }
 .footer-links a {
-  color: rgba(255,255,255,0.4);
+  color: rgba(255,255,255,0.7);
   text-decoration: none;
   font-size: 0.8rem;
   transition: color 0.15s;

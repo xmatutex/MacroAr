@@ -556,13 +556,21 @@ function crearCard(serie) {
   if (!isToolsPage) {
     div.style.cursor = 'pointer';
     div.title = 'Ver gráfico ampliado';
+    // Accesibilidad: navegable por teclado y anunciada como enlace
+    div.setAttribute('role', 'link');
+    div.setAttribute('tabindex', '0');
+    div.setAttribute('aria-label', `Ver detalle de ${serie.titulo}`);
     div.addEventListener('mouseenter', () => div.style.transform = 'translateY(-4px)');
     div.addEventListener('mouseleave', () => div.style.transform = 'translateY(0)');
     div.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
-    div.onclick = (e) => {
+    const irADetalle = (e) => {
       if (e.target.tagName.toLowerCase() === 'button' || e.target.tagName.toLowerCase() === 'input') return;
       window.location.href = `detalle.html?id=${serie.id}`;
     };
+    div.onclick = irADetalle;
+    div.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); irADetalle(e); }
+    });
   }
 
   div.innerHTML = `
@@ -638,6 +646,12 @@ function renderChart(serie, datos) {
   const labels    = datos.map(d => formatFecha(d.fecha, serie));
   const values    = datos.map(d => d.valor);
   const enDetalle = isDetallePage || isToolsPage;
+
+  // Nombre accesible para lectores de pantalla
+  const ultimo = datos[datos.length - 1];
+  canvas.setAttribute('role', 'img');
+  canvas.setAttribute('aria-label',
+    `Gráfico de ${serie.titulo}. Último valor: ${ultimo.valor.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${serie.unidad}, ${formatFecha(ultimo.fecha, serie)}.`);
 
   if (enDetalle) {
     canvas.style.cursor = 'grab';
@@ -1356,9 +1370,16 @@ function crearCardVerTodos() {
   const div = document.createElement('div');
   div.className = 'card';
   div.style.cssText = 'display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; cursor:pointer; min-height:220px; border:2px dashed #cbd5e1; background:#f8fafc; transition:all .2s;';
+  div.setAttribute('role', 'link');
+  div.setAttribute('tabindex', '0');
+  div.setAttribute('aria-label', 'Ver todos los indicadores');
   div.onmouseover = () => { div.style.background = '#f1f5f9'; div.style.borderColor = '#94a3b8'; };
   div.onmouseout  = () => { div.style.background = '#f8fafc'; div.style.borderColor = '#cbd5e1'; };
-  div.onclick = () => { window.location.href = 'datos.html'; };
+  const irADatos = () => { window.location.href = 'datos.html'; };
+  div.onclick = irADatos;
+  div.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); irADatos(); }
+  });
   div.innerHTML = `
     <div style="font-size:2.5rem; line-height:1; margin-bottom:0.75rem;">📊</div>
     <div style="font-weight:600; color:var(--navy); font-family:'Poppins',sans-serif; font-size:1.05rem;">Ver todos los indicadores</div>
