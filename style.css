@@ -47,6 +47,7 @@ body {
   color: #fff;
   letter-spacing: -0.5px;
   flex-shrink: 0;
+  text-decoration: none;
 }
 .nav-logo span { color: var(--teal); }
 
@@ -236,6 +237,46 @@ body {
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.25rem;
 }
+
+/* ── Menú scrolleable de categorías (página Datos) ───────── */
+.cat-menu {
+  position: sticky;
+  top: 64px;                 /* debajo del navbar */
+  z-index: 50;
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.85rem 0;
+  margin-bottom: 0.5rem;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.cat-menu::-webkit-scrollbar { height: 6px; }
+.cat-menu::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+.cat-chip {
+  flex: 0 0 auto;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.cat-chip:hover { border-color: var(--celeste); color: var(--navy); }
+.cat-chip.active {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #fff;
+}
+
+.category-section { scroll-margin-top: 120px; }
 
 /* ── Card ────────────────────────────────────────────────── */
 .card {

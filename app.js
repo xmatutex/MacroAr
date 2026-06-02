@@ -1335,10 +1335,21 @@ function loadAll() {
 
   if (isDatosPage && catContainer) {
     const categorias = [...new Set(SERIES.map(s => s.categoria || 'Otros'))];
+    const slug = cat => `cat-${cat.replace(/\s+/g, '-').toLowerCase()}`;
+
+    // Menú scrolleable de categorías (sticky bajo el navbar)
+    const menu = document.createElement('nav');
+    menu.className = 'cat-menu';
+    menu.setAttribute('aria-label', 'Categorías de indicadores');
+    menu.innerHTML = categorias.map(cat =>
+      `<a class="cat-chip" href="#${slug(cat)}">${cat}</a>`
+    ).join('');
+    catContainer.parentElement.insertBefore(menu, catContainer);
 
     categorias.forEach(cat => {
       const section = document.createElement('div');
       section.className = 'category-section';
+      section.id = slug(cat);
       section.innerHTML = `
         <h3 style="margin: 2.5rem 0 1rem; font-family: 'Poppins', sans-serif; font-size: 1.15rem; color: var(--navy); border-bottom: 2px solid var(--border); padding-bottom: 0.5rem;">${cat}</h3>
         <div class="grid" id="grid-${cat.replace(/\s+/g, '-').toLowerCase()}"></div>
@@ -1350,6 +1361,22 @@ function loadAll() {
 
       seriesCat.forEach(serie => catGrid.appendChild(crearCard(serie)));
     });
+
+    // Resaltar el chip de la categoría visible al scrollear
+    const secciones = categorias.map(cat => document.getElementById(slug(cat)));
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(en => {
+        if (en.isIntersecting) {
+          menu.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+          const chip = menu.querySelector(`.cat-chip[href="#${en.target.id}"]`);
+          if (chip) {
+            chip.classList.add('active');
+            chip.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+          }
+        }
+      });
+    }, { rootMargin: '-120px 0px -70% 0px' });
+    secciones.forEach(s => s && obs.observe(s));
   } else if (grid) {
     seriesAMostrar.forEach(serie => grid.appendChild(crearCard(serie)));
 
