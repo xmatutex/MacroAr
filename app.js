@@ -52,13 +52,17 @@ const SERIES = [
     id:       'emae',
     titulo:   'Actividad Económica (EMAE)',
     categoria: 'Actividad Económica',
-    fuente:   'indec',
-    serieId:  '143.3_NO_PR_2004_A_21',
+    fuente:   'emae',
+    seriesEmae: {
+      estacional: '143.3_NO_PR_2004_A_21',  // EMAE serie original, base 2004
+      desest:     '143.3_NO_PR_2004_A_31',  // EMAE desestacionalizada, base 2004
+    },
+    anioBase: 2004,
     unidad:   'índice',
     color:    '#7c3aed',
     meses:    36,
     premium:  false,
-    variacion: false,
+    emaeMultivista: true,
   },
   {
     id:        'icc-ditella',
@@ -436,6 +440,56 @@ async function fetchAlphaVantage(symbol, dias, factor = 1) {
     .map(([fecha, v]) => ({ fecha, valor: +(parseFloat(v['4. close']) * factor).toFixed(2) }));
 }
 
+// EMAE: trae las dos series (con estacionalidad + desestacionalizada) y las cachea.
+// Devuelve { estacional: [...], desest: [...] } con índices mensuales base 2004.
+let _emaeCache = null;
+
+async function fetchEmae(seriesEmae) {
+  if (_emaeCache) return _emaeCache;
+  const ids = `${seriesEmae.estacional},${seriesEmae.desest}`;
+  const url = `https://apis.datos.gob.ar/series/api/series/?ids=${ids}&limit=5000&format=json`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`INDEC HTTP ${res.status}`);
+  const json = await res.json();
+  const estacional = [];
+  const desest = [];
+  (json.data || []).forEach(([fecha, vEst, vDes]) => {
+    if (vEst != null) estacional.push({ fecha, valor: +vEst.toFixed(2) });
+    if (vDes != null) desest.push({ fecha, valor: +vDes.toFixed(2) });
+  });
+  if (!estacional.length && !desest.length) throw new Error('Sin datos de EMAE.');
+  _emaeCache = { estacional, desest };
+  return _emaeCache;
+}
+
+// Transforma una serie mensual de índice según la lectura elegida.
+// lectura: 'indice' | 'var-mensual' | 'var-trimestral' | 'var-interanual'
+function transformarEmae(data, lectura) {
+  if (lectura === 'indice' || !data.length) return data;
+
+  if (lectura === 'var-interanual') {
+    return data.slice(12).map((d, i) => ({
+      fecha: d.fecha,
+      valor: data[i].valor ? +((d.valor / data[i].valor - 1) * 100).toFixed(2) : null,
+    })).filter(d => d.valor != null);
+  }
+
+  if (lectura === 'var-trimestral') {
+    // Promediar a trimestre y luego variación trimestre contra trimestre
+    const q = agregarDatos(data, 'trimestral');
+    return q.slice(1).map((d, i) => ({
+      fecha: d.fecha,
+      valor: q[i].valor ? +((d.valor / q[i].valor - 1) * 100).toFixed(2) : null,
+    })).filter(d => d.valor != null);
+  }
+
+  // var-mensual
+  return data.slice(1).map((d, i) => ({
+    fecha: d.fecha,
+    valor: data[i].valor ? +((d.valor / data[i].valor - 1) * 100).toFixed(2) : null,
+  })).filter(d => d.valor != null);
+}
+
 async function fetchLocal(serieId, dias = null) {
   const res = await fetch(`data/${serieId}.json`);
   if (!res.ok) throw new Error(`No se encontró data/${serieId}.json`);
@@ -742,6 +796,7 @@ function agregarDatos(datos, periodo) {
 
 function setupChartControls(serie, datos) {
   if (!isToolsPage && !isDetallePage) return; // Si no es herramientas ni detalle, salimos
+  if (serie.emaeMultivista) return setupEmaeControls(serie, datos);
 
   const controlsContainer = document.getElementById(`controls-${serie.id}`);
   const aggGroup = document.getElementById(`agg-group-${serie.id}`);
@@ -791,10 +846,80 @@ function setupChartControls(serie, datos) {
   controlsContainer.style.display = 'flex';
 }
 
+// Controles específicos del EMAE: selector de serie (estacional/desest) + lectura (índice/variaciones)
+function setupEmaeControls(serie, datos) {
+  const controlsContainer = document.getElementById(`controls-${serie.id}`);
+  if (!controlsContainer) return;
+
+  const grupoBotones = (groupId, opciones, activo) => {
+    const botones = opciones.map(([val, label], i) => {
+      const radius = i === 0 ? '6px 0 0 6px' : i === opciones.length - 1 ? '0 6px 6px 0' : '0';
+      const borderLeft = i > 0 ? 'border-left:none;' : '';
+      const act = val === activo;
+      return `<button data-val="${val}" data-active="${act ? 1 : 0}" style="background:${act ? '#e2e8f0' : 'transparent'}; color:${act ? '#1e293b' : 'inherit'}; border:1px solid #e2e8f0; ${borderLeft} padding:3px 10px; cursor:pointer; font-size:0.75rem; border-radius:${radius}; font-family:inherit;">${label}</button>`;
+    }).join('');
+    return `<div class="btn-group" id="${groupId}">${botones}</div>`;
+  };
+
+  controlsContainer.innerHTML = `
+    <div style="display:flex; align-items:center; gap:0.5rem;">
+      <label style="font-weight:500; color:var(--navy);">Serie:</label>
+      ${grupoBotones(`emae-serie-${serie.id}`, [['desest', 'Desestacionalizada'], ['estacional', 'Con estacionalidad']], 'desest')}
+    </div>
+    <div style="display:flex; align-items:center; gap:0.5rem;">
+      <label style="font-weight:500; color:var(--navy);">Lectura:</label>
+      ${grupoBotones(`emae-lectura-${serie.id}`, [['indice', 'Índice'], ['var-mensual', 'Var. mensual'], ['var-trimestral', 'Var. trimestral'], ['var-interanual', 'Var. interanual']], 'indice')}
+    </div>
+    <div style="display:flex; align-items:center; gap:0.5rem; flex:1; min-width:280px;">
+      <label style="font-weight:500; color:var(--navy);">Período:</label>
+      <input type="date" id="start-date-${serie.id}" style="padding:6px 10px; border-radius:6px; border:1px solid #e2e8f0; outline:none; flex:1; font-family:inherit;">
+      <span class="muted">→</span>
+      <input type="date" id="end-date-${serie.id}" style="padding:6px 10px; border-radius:6px; border:1px solid #e2e8f0; outline:none; flex:1; font-family:inherit;">
+    </div>
+  `;
+
+  // Listeners de los grupos de botones (toggle exclusivo + re-render)
+  ['emae-serie', 'emae-lectura'].forEach(prefix => {
+    const group = document.getElementById(`${prefix}-${serie.id}`);
+    group.querySelectorAll('button').forEach(btn => {
+      btn.onclick = () => {
+        group.querySelectorAll('button').forEach(b => {
+          b.dataset.active = '0';
+          b.style.background = 'transparent';
+          b.style.color = 'inherit';
+        });
+        btn.dataset.active = '1';
+        btn.style.background = '#e2e8f0';
+        btn.style.color = '#1e293b';
+        actualizarGrafico(serie.id);
+      };
+    });
+  });
+
+  // Rango de fechas sobre la serie mensual
+  const startDateInput = document.getElementById(`start-date-${serie.id}`);
+  const endDateInput = document.getElementById(`end-date-${serie.id}`);
+  const minDate = datos[0].fecha.slice(0, 10);
+  const maxDate = datos[datos.length - 1].fecha.slice(0, 10);
+  startDateInput.min = endDateInput.min = minDate;
+  startDateInput.max = endDateInput.max = maxDate;
+  startDateInput.value = minDate;
+  endDateInput.value = maxDate;
+  startDateInput.onchange = () => actualizarGrafico(serie.id);
+  endDateInput.onchange = () => actualizarGrafico(serie.id);
+
+  controlsContainer.style.display = 'flex';
+}
+
 function actualizarGrafico(serieId) {
   const serie = SERIES.find(s => s.id === serieId);
   const rawData = rawDataStore[serieId];
   if (!serie || !rawData) return;
+
+  // EMAE: ruta especial con selector de serie + lectura
+  if (serie.emaeMultivista && (isToolsPage || isDetallePage)) {
+    return actualizarGraficoEmae(serie);
+  }
 
   let processedData = rawData;
 
@@ -821,6 +946,57 @@ function actualizarGrafico(serieId) {
     const btnExport = document.getElementById(`btn-export-${serieId}`);
     if (btnExport) btnExport.onclick = () => exportarCSV(serie, processedData);
   }
+}
+
+const LECTURAS_EMAE_LABEL = {
+  'indice':         'Índice',
+  'var-mensual':    'Variación % mensual',
+  'var-trimestral': 'Variación % trimestral',
+  'var-interanual': 'Variación % interanual',
+};
+
+function actualizarGraficoEmae(serie) {
+  const serieId = serie.id;
+  const serieSel   = document.querySelector(`#emae-serie-${serieId} button[data-active="1"]`)?.dataset.val || 'desest';
+  const lecturaSel = document.querySelector(`#emae-lectura-${serieId} button[data-active="1"]`)?.dataset.val || 'indice';
+
+  const base = (_emaeCache && _emaeCache[serieSel]) ? _emaeCache[serieSel] : rawDataStore[serieId];
+
+  // Filtrar por fecha sobre la serie mensual ANTES de transformar (evita problemas con formato trimestral)
+  const startDate = document.getElementById(`start-date-${serieId}`).value;
+  const endDate   = document.getElementById(`end-date-${serieId}`).value;
+  const filtrada = base.filter(d => d.fecha.slice(0, 10) >= startDate && d.fecha.slice(0, 10) <= endDate);
+
+  const processedData = transformarEmae(filtrada, lecturaSel);
+
+  // Serie derivada para el render: índice = línea, variaciones = barras
+  const esIndice = lecturaSel === 'indice';
+  const serieRender = {
+    ...serie,
+    unidad: esIndice ? `índice (base ${serie.anioBase}=100)` : '%',
+    tipo:   esIndice ? 'line' : 'bar',
+  };
+
+  renderChart(serieRender, processedData);
+
+  const badge = document.getElementById(`badge-${serieId}`);
+  if (badge && processedData.length > 0) {
+    const ultimo = processedData[processedData.length - 1].valor;
+    const unidadBadge = esIndice ? `(base ${serie.anioBase}=100)` : '%';
+    const signo = !esIndice && ultimo > 0 ? '+' : '';
+    badge.textContent = `${signo}${ultimo.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${unidadBadge}`;
+  }
+
+  // Sublabel dinámico de la lectura
+  const meta = document.getElementById(`meta-${serieId}`);
+  if (meta && processedData.length > 0) {
+    const ultimo = processedData[processedData.length - 1];
+    const serieTxt = serieSel === 'desest' ? 'desestacionalizada' : 'con estacionalidad';
+    meta.textContent = `${LECTURAS_EMAE_LABEL[lecturaSel]} · serie ${serieTxt} · último: ${formatFecha(ultimo.fecha, serie)}`;
+  }
+
+  const btnExport = document.getElementById(`btn-export-${serieId}`);
+  if (btnExport) btnExport.onclick = () => exportarCSV(serieRender, processedData);
 }
 
 // ─── Herramientas Extras ──────────────────────────────────────────────────────
@@ -939,6 +1115,10 @@ async function cargarSerie(serie) {
       datos = await fetchAlphaVantage(serie.serieId, diasReq, serie.factor ?? 1);
     } else if (serie.fuente === 'argentinadatos') {
       datos = await fetchArgentinaDatos(serie.serieId, diasReq);
+    } else if (serie.fuente === 'emae') {
+      const emae = await fetchEmae(serie.seriesEmae);
+      datos = emae.desest;  // por defecto: desestacionalizada (indica si la economía creció)
+      if (!(isToolsPage || isDetallePage)) datos = datos.slice(-(serie.meses || 36));
     } else if (serie.fuente === 'local') {
       datos = await fetchLocal(serie.serieId, diasReq);
     } else if (serie.fuente.startsWith('mock')) {
@@ -1026,7 +1206,7 @@ function loadAll() {
           <button id="btn-png-${serie.id}" style="display: none; font-size: 0.85rem; padding: 4px 10px; border-radius: 6px; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; color: var(--navy); font-weight: 500; font-family: inherit; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'" title="Descargar gráfico como imagen" onclick="descargarPNG('${serie.id}', '${serie.titulo}')">🖼️ Descargar PNG</button>
         </h1>
         <p class="detalle-meta">
-          Categoría: ${serie.categoria} · Fuente: ${serie.fuente.toUpperCase()} · Unidad: ${serie.unidad}
+          Categoría: ${serie.categoria} · Fuente: ${serie.fuente.toUpperCase()}${serie.anioBase ? ` · Base ${serie.anioBase}=100` : ` · Unidad: ${serie.unidad}`}
         </p>
       </div>
       <div class="card-controls" id="controls-${serie.id}" style="display: none; background: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-bottom: 1.5rem; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
