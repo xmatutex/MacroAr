@@ -288,28 +288,6 @@ const SERIES = [
     dias:      365,
     premium:   false,
   },
-  {
-    id:        'banda-inferior',
-    titulo:    'Banda Cambiaria Inferior',
-    categoria: 'Mercado Cambiario',
-    fuente:    'bcra',
-    serieId:   1187,
-    unidad:    '$/USD',
-    color:     '#16a34a',
-    dias:      180,
-    premium:   false,
-  },
-  {
-    id:        'banda-superior',
-    titulo:    'Banda Cambiaria Superior',
-    categoria: 'Mercado Cambiario',
-    fuente:    'bcra',
-    serieId:   1188,
-    unidad:    '$/USD',
-    color:     '#dc2626',
-    dias:      180,
-    premium:   false,
-  },
 ];
 
 
