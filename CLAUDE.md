@@ -28,6 +28,12 @@ pip install -r requirements.txt
 
 **El frontend no tiene build step** — es HTML/CSS/JS estático. Abrí `index.html` directamente en el navegador o servilo con cualquier servidor estático.
 
+**Correr los tests:**
+```bash
+node --test
+```
+Cubren las funciones puras de `lib.js` (formatFecha, agregarDatos, transformarEmae). Usan `node:test`, sin dependencias. Corren en CI con cada push (`.github/workflows/test.yml`).
+
 ## Arquitectura
 
 ### Frontend (HTML + JS estático)

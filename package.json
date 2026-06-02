@@ -1,0 +1,8 @@
+{
+  "name": "macroar",
+  "private": true,
+  "description": "Visualizador de indicadores macroeconómicos de Argentina",
+  "scripts": {
+    "test": "node --test"
+  }
+}
