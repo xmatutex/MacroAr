@@ -22,6 +22,7 @@ const SERIES = [
     dias:     90,
     diasFree: 30,
     premium:  false,
+    principal: true,
   },
   {
     id:      'tc-blue',
@@ -47,6 +48,7 @@ const SERIES = [
     tipo:      'bar',
     variacion: true,
     premium:   false,
+    principal: true,
   },
   {
     id:       'emae',
@@ -197,7 +199,8 @@ const SERIES = [
     color:     '#0284c7',
     dias:      365,
     diasFree:  90,
-    premium:   false
+    premium:   false,
+    principal: true,
   },
   {
     id:        'base-monetaria',
@@ -257,6 +260,7 @@ const SERIES = [
     color:     '#ef4444',
     dias:      730,
     premium:   false,
+    principal: true,
   },
   {
     id:        'merval-ars',
@@ -515,10 +519,10 @@ async function fetchArgentinaDatos(endpoint, dias) {
 
 // ─── Hero stats ───────────────────────────────────────────────────────────────
 
-function inicializarHeroStats() {
+function inicializarHeroStats(lista = SERIES) {
   const container = document.getElementById('hero-stats');
   container.innerHTML = '';
-  SERIES.forEach(serie => {
+  lista.forEach(serie => {
     const div = document.createElement('div');
     div.className = 'hero-stat';
     div.id = `hstat-${serie.id}`;
@@ -996,7 +1000,10 @@ function actualizarGraficoEmae(serie) {
   }
 
   const btnExport = document.getElementById(`btn-export-${serieId}`);
-  if (btnExport) btnExport.onclick = () => exportarCSV(serieRender, processedData);
+  if (btnExport) {
+    btnExport.onclick = () => exportarCSVEmaeCompleto();
+    btnExport.title = 'Descargar CSV con todas las lecturas (índice y variaciones, ambas series)';
+  }
 }
 
 // ─── Herramientas Extras ──────────────────────────────────────────────────────
@@ -1014,6 +1021,60 @@ function exportarCSV(serie, datos) {
   const link = document.createElement('a');
   link.setAttribute('href', url);
   link.setAttribute('download', `macroar_${serie.id}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+// CSV del EMAE con TODAS las lecturas: ambas series y sus variaciones, alineadas por fecha.
+function exportarCSVEmaeCompleto() {
+  if (!_emaeCache) return;
+  const { estacional, desest } = _emaeCache;
+
+  const mapNivel = arr => Object.fromEntries(arr.map(d => [d.fecha.slice(0, 10), d.valor]));
+  const mapVar = (arr, lag) => {
+    const m = {};
+    for (let i = lag; i < arr.length; i++) {
+      const prev = arr[i - lag].valor;
+      m[arr[i].fecha.slice(0, 10)] = prev ? +((arr[i].valor / prev - 1) * 100).toFixed(2) : '';
+    }
+    return m;
+  };
+
+  const estNivel = mapNivel(estacional);
+  const desNivel = mapNivel(desest);
+  const estVarM  = mapVar(estacional, 1);
+  const estVarI  = mapVar(estacional, 12);
+  const desVarM  = mapVar(desest, 1);
+  const desVarI  = mapVar(desest, 12);
+
+  const fechas = [...new Set([...estacional, ...desest].map(d => d.fecha.slice(0, 10)))].sort();
+
+  const cabeceras = [
+    'Fecha',
+    'Indice_con_estacionalidad',
+    'Indice_desestacionalizado',
+    'Var_mensual_desest_%',
+    'Var_interanual_desest_%',
+    'Var_mensual_con_estacionalidad_%',
+    'Var_interanual_con_estacionalidad_%',
+  ];
+  const filas = fechas.map(f => [
+    f,
+    estNivel[f] ?? '',
+    desNivel[f] ?? '',
+    desVarM[f]  ?? '',
+    desVarI[f]  ?? '',
+    estVarM[f]  ?? '',
+    estVarI[f]  ?? '',
+  ].join(','));
+
+  const csv = [cabeceras.join(','), ...filas].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', 'macroar_emae_completo.csv');
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -1251,7 +1312,11 @@ function loadAll() {
     return;
   }
 
-  inicializarHeroStats();
+  // En el Inicio mostramos solo los indicadores principales; el catálogo completo vive en Datos.
+  const esInicio = !isDatosPage && !isToolsPage && !isDetallePage;
+  const seriesAMostrar = esInicio ? SERIES.filter(s => s.principal) : SERIES;
+
+  inicializarHeroStats(seriesAMostrar);
 
   if (isDatosPage && catContainer) {
     const categorias = [...new Set(SERIES.map(s => s.categoria || 'Otros'))];
@@ -1271,7 +1336,10 @@ function loadAll() {
       seriesCat.forEach(serie => catGrid.appendChild(crearCard(serie)));
     });
   } else if (grid) {
-    SERIES.forEach(serie => grid.appendChild(crearCard(serie)));
+    seriesAMostrar.forEach(serie => grid.appendChild(crearCard(serie)));
+
+    // En el Inicio, agregar un acceso al catálogo completo
+    if (esInicio) grid.appendChild(crearCardVerTodos());
 
     // Agregar la tarjeta de calculadora al final del grid de métricas
     if (isToolsPage) {
@@ -1279,10 +1347,26 @@ function loadAll() {
     }
   }
 
-  Promise.all(SERIES.map(cargarSerie)).then(() => {
+  Promise.all(seriesAMostrar.map(cargarSerie)).then(() => {
     document.getElementById('last-update').textContent =
       `Actualizado: ${new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs`;
   });
+}
+
+// Tarjeta de acceso al catálogo completo (solo en el Inicio)
+function crearCardVerTodos() {
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.style.cssText = 'display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; cursor:pointer; min-height:220px; border:2px dashed #cbd5e1; background:#f8fafc; transition:all .2s;';
+  div.onmouseover = () => { div.style.background = '#f1f5f9'; div.style.borderColor = '#94a3b8'; };
+  div.onmouseout  = () => { div.style.background = '#f8fafc'; div.style.borderColor = '#cbd5e1'; };
+  div.onclick = () => { window.location.href = 'datos.html'; };
+  div.innerHTML = `
+    <div style="font-size:2.5rem; line-height:1; margin-bottom:0.75rem;">📊</div>
+    <div style="font-weight:600; color:var(--navy); font-family:'Poppins',sans-serif; font-size:1.05rem;">Ver todos los indicadores</div>
+    <div style="color:#64748b; font-size:0.9rem; margin-top:0.35rem;">Catálogo completo por categoría →</div>
+  `;
+  return div;
 }
 
 loadAll();
