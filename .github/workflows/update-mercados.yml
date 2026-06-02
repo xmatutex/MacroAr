@@ -1,0 +1,42 @@
+name: Actualizar datos de mercado
+
+# Refresca data/merval.json desde Yahoo Finance.
+# Los demás indicadores (BCRA, INDEC, Bluelytics, ArgentinaDatos, Alpha Vantage)
+# se consumen en vivo desde el browser, así que no necesitan actualización acá.
+# Los datos de Excel (REM, ICC, EI) se actualizan a mano con subir_datos.py.
+
+on:
+  schedule:
+    # Lunes a las 12:00 UTC (09:00 ART)
+    - cron: '0 12 * * 1'
+  workflow_dispatch:  # permite correrlo manualmente desde la pestaña Actions
+
+permissions:
+  contents: write
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Traer datos de mercado
+        run: python fetch_mercados.py
+
+      - name: Commitear si hay cambios
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain data/)" ]; then
+            git add data/
+            git commit -m "data: auto-update Merval ($(date -u +%Y-%m-%d))"
+            git push
+          else
+            echo "Sin cambios en los datos."
+          fi

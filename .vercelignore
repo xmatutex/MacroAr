@@ -1,0 +1,9 @@
+Datos BCRA/
+Datos UTDT/
+streamlit_app.py
+MacroAR.PY
+subir_datos.py
+fetch_mercados.py
+requirements.txt
+secrets.toml
+.gstack/
