@@ -42,11 +42,10 @@ pip install -r requirements.txt
 | **Bluelytics** | Dólar oficial y blue | REST público |
 | **BCRA v4.0** | Reservas, base monetaria, BADLAR, TC mayorista | `/estadisticas/v4.0/monetarias/{id}` |
 | **INDEC / datos.gob.ar** | IPC, EMAE | `/series/api/series/?ids=` |
-| **JSON local** | ICC Di Tella, EI Di Tella, indicadores REM, Merval | `data/{id}.json` generados por `subir_datos.py` y `fetch_mercados.py` |
-| **Alpha Vantage** | Precio del oro (ETF GLD) | API con clave; cachea en `localStorage` 8h |
+| **JSON local** | ICC Di Tella, EI Di Tella, indicadores REM, Merval, Oro | `data/{id}.json` generados por `subir_datos.py` y `fetch_mercados.py` |
 | **ArgentinaDatos** | Riesgo País (EMBI+) | REST público con CORS, `api.argentinadatos.com` |
 
-**Nota CORS:** Yahoo Finance (Merval) bloquea CORS desde el browser, por eso se trae del lado servidor con `fetch_mercados.py` a `data/merval.json` y se consume con `fuente: 'local'`.
+**Nota CORS / límites:** Yahoo Finance (Merval `^MERV`, Oro `GC=F`) bloquea CORS desde el browser y Alpha Vantage tiene límite de 25 req/día compartido. Por eso ambos se traen del lado servidor con `fetch_mercados.py` a `data/merval.json` y `data/oro.json`, y se consumen con `fuente: 'local'`. El oro es el futuro COMEX en USD/oz directo.
 
 ### Datos locales (ICC, EI, REM)
 - `subir_datos.py` parsea los Excel de UTDT (ICC, EI) y BCRA (REM) y genera `data/{id}.json`.

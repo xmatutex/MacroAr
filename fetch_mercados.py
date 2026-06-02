@@ -52,3 +52,5 @@ def fetch_yahoo(symbol, nombre, rango='5y'):
 if __name__ == "__main__":
     # ^MERV = índice Merval (Bolsa de Buenos Aires)
     fetch_yahoo('%5EMERV', 'merval')
+    # GC=F = futuro de oro COMEX (USD/oz directo)
+    fetch_yahoo('GC%3DF', 'oro', rango='5y')
