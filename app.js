@@ -421,8 +421,10 @@ async function fetchArgentinaDatos(endpoint, dias) {
 
 function inicializarHeroStats(lista = SERIES) {
   const container = document.getElementById('hero-stats');
+  if (!container) return;
   container.innerHTML = '';
-  lista.forEach(serie => {
+
+  const tile = serie => {
     const div = document.createElement('div');
     div.className = 'hero-stat';
     div.id = `hstat-${serie.id}`;
@@ -431,8 +433,35 @@ function inicializarHeroStats(lista = SERIES) {
       <div class="hero-stat-value placeholder" id="hval-${serie.id}">—</div>
       <div class="hero-stat-unit">${serie.unidad}</div>
     `;
-    container.appendChild(div);
-  });
+    return div;
+  };
+
+  // Si la lista trae principales + resto (caso Datos), mostramos los principales
+  // y el resto detrás de una cajita-flecha desplegable. Si no (caso Inicio, que
+  // ya manda solo los principales), se muestran todos planos.
+  const principales = lista.filter(s => s.principal);
+  const ocultos = principales.length ? lista.filter(s => !s.principal) : [];
+  const visibles = principales.length ? principales : lista;
+
+  visibles.forEach(s => container.appendChild(tile(s)));
+
+  if (ocultos.length) {
+    const wrap = document.createElement('span');
+    wrap.id = 'hero-stats-resto';
+    ocultos.forEach(s => wrap.appendChild(tile(s)));
+    container.appendChild(wrap);
+
+    const btn = document.createElement('button');
+    btn.className = 'hero-stats-toggle';
+    btn.setAttribute('aria-label', 'Ver todos los valores');
+    btn.innerHTML = '<span class="chev">▾</span>';
+    btn.onclick = () => {
+      const abierto = wrap.classList.toggle('abierto');
+      btn.classList.toggle('abierto', abierto);
+      btn.setAttribute('aria-label', abierto ? 'Ver menos valores' : 'Ver todos los valores');
+    };
+    container.appendChild(btn);
+  }
 }
 
 function actualizarHeroStat(serie, valor) {
