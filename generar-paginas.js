@@ -95,6 +95,7 @@ function plantilla(serie) {
       <div class="footer-logo">Macro<span>Ar</span></div>
       <p class="footer-desc">Visualización de datos macroeconómicos de Argentina.</p>
       <div class="footer-links">
+        <a href="/contacto">Contacto</a>
         <a href="https://www.bcra.gob.ar" target="_blank">BCRA</a>
         <a href="https://apis.datos.gob.ar/series" target="_blank">datos.gob.ar</a>
         <a href="https://www.indec.gob.ar" target="_blank">INDEC</a>
@@ -124,8 +125,9 @@ for (const serie of SERIES) {
 // ── 4. Regenerar sitemap.xml ─────────────────────────────────────────────────
 const hoy = new Date().toISOString().slice(0, 10);
 const urls = [
-  { loc: `${BASE_URL}/`,      freq: 'daily', prio: '1.0' },
-  { loc: `${BASE_URL}/datos`, freq: 'daily', prio: '0.8' },
+  { loc: `${BASE_URL}/`,        freq: 'daily',   prio: '1.0' },
+  { loc: `${BASE_URL}/datos`,   freq: 'daily',   prio: '0.8' },
+  { loc: `${BASE_URL}/contacto`, freq: 'monthly', prio: '0.5' },
   ...slugs.map(s => ({ loc: `${BASE_URL}/indicador/${s}`, freq: 'daily', prio: '0.7' })),
 ];
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>

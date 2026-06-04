@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contacto — MacroAr | Consultas y recomendaciones</title>
+  <meta name="description" content="¿Tenés una consulta, querés sugerir un indicador o reportar un dato? Escribinos. MacroAr es un proyecto abierto a la comunidad.">
+  <link rel="canonical" href="https://macroar.com.ar/contacto">
+  <meta name="theme-color" content="#1c3c63">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="MacroAr">
+  <meta property="og:locale" content="es_AR">
+  <meta property="og:url" content="https://macroar.com.ar/contacto">
+  <meta property="og:title" content="Contacto — MacroAr">
+  <meta property="og:description" content="Consultas, recomendaciones de indicadores y reporte de datos. Escribinos.">
+  <meta property="og:image" content="https://macroar.com.ar/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Contacto — MacroAr">
+  <meta name="twitter:description" content="Consultas, recomendaciones de indicadores y reporte de datos.">
+  <meta name="twitter:image" content="https://macroar.com.ar/og-image.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="page-contacto">
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo" aria-label="MacroAr — ir al inicio">Macro<span>Ar</span></a>
+      <div class="nav-links">
+        <a href="/">Inicio</a>
+        <a href="/datos">Datos</a>
+        <a href="/contacto" style="color: #fff;">Contacto</a>
+      </div>
+      <div class="nav-actions"></div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <p class="hero-eyebrow">Estamos para escucharte</p>
+        <h1>Consultas y <em>Recomendaciones</em></h1>
+        <p class="hero-sub">¿Querés sugerir un indicador, reportar un dato o hacernos una consulta? Escribinos.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Formulario -->
+  <section class="contacto-section">
+    <div class="contacto-inner">
+      <form id="contacto-form" class="contacto-form" novalidate>
+        <!-- Web3Forms: reemplazar por tu access key (https://web3forms.com) -->
+        <input type="hidden" name="access_key" value="REEMPLAZAR_ACCESS_KEY">
+        <input type="hidden" name="subject" value="Nuevo mensaje desde MacroAr">
+        <input type="hidden" name="from_name" value="MacroAr">
+        <!-- Honeypot anti-spam (debe quedar vacío) -->
+        <input type="checkbox" name="botcheck" class="hp-field" tabindex="-1" autocomplete="off">
+
+        <div class="form-row">
+          <label for="nombre">Nombre</label>
+          <input type="text" id="nombre" name="nombre" required placeholder="Tu nombre">
+        </div>
+
+        <div class="form-row">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required placeholder="tu@email.com">
+        </div>
+
+        <div class="form-row">
+          <label for="asunto">Asunto</label>
+          <select id="asunto" name="asunto">
+            <option value="Consulta">Consulta general</option>
+            <option value="Recomendación de indicador">Recomendar un indicador</option>
+            <option value="Reporte de dato">Reportar un dato incorrecto</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="mensaje">Mensaje</label>
+          <textarea id="mensaje" name="mensaje" rows="6" required placeholder="Contanos en qué podemos ayudarte..."></textarea>
+        </div>
+
+        <button type="submit" class="btn-enviar" id="btn-enviar">Enviar mensaje</button>
+        <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+      </form>
+
+      <aside class="contacto-aside">
+        <h2>Otras formas de contacto</h2>
+        <p>Si preferís, escribinos directamente a:</p>
+        <a class="contacto-mail" href="mailto:contacto@macroar.com.ar">contacto@macroar.com.ar</a>
+        <p class="contacto-nota">MacroAr es un proyecto abierto a la comunidad. Leemos todas las sugerencias: los indicadores más pedidos los sumamos al sitio.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer id="fuentes">
+    <div class="footer-inner">
+      <div class="footer-logo">Macro<span>Ar</span></div>
+      <p class="footer-desc">Visualización de datos macroeconómicos de Argentina.</p>
+      <div class="footer-links">
+        <a href="/contacto">Contacto</a>
+        <a href="https://www.bcra.gob.ar" target="_blank">BCRA</a>
+        <a href="https://apis.datos.gob.ar/series" target="_blank">datos.gob.ar</a>
+        <a href="https://www.indec.gob.ar" target="_blank">INDEC</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/contacto.js"></script>
+</body>
+</html>

@@ -13,6 +13,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://macroar.com.ar/contacto</loc>
+    <lastmod>2026-06-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://macroar.com.ar/indicador/dolar-oficial</loc>
     <lastmod>2026-06-04</lastmod>
     <changefreq>daily</changefreq>
