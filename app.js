@@ -1305,11 +1305,19 @@ function construirNavDatos() {
   const menu = document.createElement('div');
   menu.className = 'nav-dropdown-menu';
   menu.setAttribute('role', 'menu');
-  menu.innerHTML =
-    `<a class="nav-dropdown-item nav-dropdown-all" role="menuitem" href="datos.html">Ver catálogo completo</a>` +
-    categorias.map(cat =>
-      `<a class="nav-dropdown-item" role="menuitem" href="datos.html#${slug(cat)}">${cat}</a>`
+
+  let html = `<a class="nav-dropdown-item nav-dropdown-all" role="menuitem" href="datos.html">Ver catálogo completo</a>`;
+  categorias.forEach(cat => {
+    const seriesCat = SERIES.filter(s => (s.categoria || 'Otros') === cat);
+    const subItems = seriesCat.map(s =>
+      `<a class="nav-submenu-item" role="menuitem" href="detalle.html?id=${s.id}">${s.titulo}</a>`
     ).join('');
+    html += `<div class="nav-dropdown-cat">
+      <a class="nav-dropdown-item nav-cat-link" role="menuitem" href="datos.html#${slug(cat)}">${cat}<span class="nav-subcaret" aria-hidden="true">›</span></a>
+      <div class="nav-submenu" role="menu">${subItems}</div>
+    </div>`;
+  });
+  menu.innerHTML = html;
 
   wrap.appendChild(toggle);
   wrap.appendChild(menu);
@@ -1322,10 +1330,8 @@ function construirNavDatos() {
     const abierto = wrap.classList.toggle('open');
     toggle.setAttribute('aria-expanded', abierto ? 'true' : 'false');
   });
-  // Al elegir una categoría en la misma página de Datos, cerrar el menú
-  menu.querySelectorAll('.nav-dropdown-item').forEach(item =>
-    item.addEventListener('click', cerrar)
-  );
+  // Al elegir cualquier opción (categoría o índice individual), cerrar el menú
+  menu.querySelectorAll('a').forEach(item => item.addEventListener('click', cerrar));
   document.addEventListener('click', (e) => { if (!wrap.contains(e.target)) cerrar(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrar(); });
 }
