@@ -1,3 +1,6 @@
-streamlit
-google-generativeai
-python-dotenv
+# Dependencias para los scripts de datos.
+# subir_datos.py: parsea los Excel de UTDT/BCRA y genera data/{id}.json
+# fetch_mercados.py: solo usa la librería estándar (urllib), no requiere nada extra.
+pandas
+openpyxl   # leer .xlsx
+xlrd       # leer .xls

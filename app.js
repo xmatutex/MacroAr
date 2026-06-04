@@ -68,7 +68,7 @@ const SERIES = [
     id:        'icc-ditella',
     titulo:    'Confianza del Consumidor (Var. Mensual)',
     categoria: 'Confianza y Expectativas',
-    fuente:    'supabase',
+    fuente:    'local',
     serieId:   'icc',
     unidad:    '%',
     color:     '#ea580c',
@@ -81,7 +81,7 @@ const SERIES = [
     id:        'ei-ditella',
     titulo:    'Expectativas de Inflación (Di Tella)',
     categoria: 'Confianza y Expectativas',
-    fuente:    'supabase',
+    fuente:    'local',
     serieId:   'ei',
     unidad:    '%',
     color:     '#ca8a04',
@@ -92,7 +92,7 @@ const SERIES = [
     id:        'rem-ipc',
     titulo:    'Inflación General (REM)',
     categoria: 'Expectativas (REM)',
-    fuente:    'supabase',
+    fuente:    'local',
     serieId:   'rem-ipc',
     unidad:    '%',
     color:     '#f43f5e',
@@ -103,7 +103,7 @@ const SERIES = [
     id:        'rem-ipc-nucleo',
     titulo:    'Inflación Núcleo (REM)',
     categoria: 'Expectativas (REM)',
-    fuente:    'supabase',
+    fuente:    'local',
     serieId:   'rem-ipc-nucleo',
     unidad:    '%',
     color:     '#fb7185',
@@ -114,7 +114,7 @@ const SERIES = [
     id:        'rem-pib',
     titulo:    'Evolución del PIB (REM)',
     categoria: 'Expectativas (REM)',
-    fuente:    'supabase',
+    fuente:    'local',
     serieId:   'rem-pib',
     unidad:    '%',
     color:     '#10b981',
@@ -125,7 +125,7 @@ const SERIES = [
     id:        'rem-tcn',
     titulo:    'Tipo de Cambio Nominal (REM)',
     categoria: 'Expectativas (REM)',
-    fuente:    'supabase',
+    fuente:    'local',
     serieId:   'rem-tcn',
     unidad:    '$/USD',
     color:     '#3b82f6',
@@ -136,7 +136,7 @@ const SERIES = [
     id:        'rem-badlar',
     titulo:    'Tasa BADLAR (REM)',
     categoria: 'Expectativas (REM)',
-    fuente:    'supabase',
+    fuente:    'local',
     serieId:   'rem-badlar',
     unidad:    '%',
     color:     '#f59e0b',
@@ -147,7 +147,7 @@ const SERIES = [
     id:        'rem-expo',
     titulo:    'Exportaciones FOB (REM)',
     categoria: 'Expectativas (REM)',
-    fuente:    'supabase',
+    fuente:    'local',
     serieId:   'rem-expo',
     unidad:    'M USD',
     color:     '#0891b2',
@@ -158,7 +158,7 @@ const SERIES = [
     id:        'rem-impo',
     titulo:    'Importaciones CIF (REM)',
     categoria: 'Expectativas (REM)',
-    fuente:    'supabase',
+    fuente:    'local',
     serieId:   'rem-impo',
     unidad:    'M USD',
     color:     '#0369a1',
@@ -169,7 +169,7 @@ const SERIES = [
     id:        'rem-desocupacion',
     titulo:    'Desocupación (REM)',
     categoria: 'Expectativas (REM)',
-    fuente:    'supabase',
+    fuente:    'local',
     serieId:   'rem-desocupacion',
     unidad:    '%',
     color:     '#64748b',
@@ -180,7 +180,7 @@ const SERIES = [
     id:        'rem-resultado',
     titulo:    'Resultado Primario (REM)',
     categoria: 'Expectativas (REM)',
-    fuente:    'supabase',
+    fuente:    'local',
     serieId:   'rem-resultado',
     unidad:    'Miles M ARS',
     color:     '#06b6d4',
@@ -240,6 +240,7 @@ const SERIES = [
     titulo:    'Precio del Oro',
     categoria: 'Commodities',
     fuente:    'local',
+    ventana:   true,
     serieId:   'oro',
     unidad:    'USD/oz',
     color:     '#d97706',
@@ -264,6 +265,7 @@ const SERIES = [
     titulo:    'Merval',
     categoria: 'Mercado de Capitales',
     fuente:    'local',
+    ventana:   true,
     serieId:   'merval',
     unidad:    'ARS',
     color:     '#0d9488',
@@ -1072,14 +1074,6 @@ async function cargarSerie(serie) {
             valor: raw[i].valor > 0 ? +((d.valor / raw[i].valor - 1) * 100).toFixed(2) : null,
           })).filter(d => d.valor !== null)
         : raw;
-    } else if (serie.fuente === 'supabase') {
-      const raw = await fetchLocal(serie.serieId);
-      datos = serie.variacion
-        ? raw.slice(1).map((d, i) => ({
-            fecha: d.fecha,
-            valor: raw[i].valor > 0 ? +((d.valor / raw[i].valor - 1) * 100).toFixed(2) : null,
-          })).filter(d => d.valor !== null)
-        : raw;
     } else if (serie.fuente === 'argentinadatos') {
       datos = await fetchArgentinaDatos(serie.serieId, diasReq);
     } else if (serie.fuente === 'emae') {
@@ -1087,7 +1081,15 @@ async function cargarSerie(serie) {
       datos = emae.desest;  // por defecto: desestacionalizada (indica si la economía creció)
       if (!(isToolsPage || isDetallePage)) datos = datos.slice(-(serie.meses || 36));
     } else if (serie.fuente === 'local') {
-      datos = await fetchLocal(serie.serieId, diasReq);
+      // JSON local (data/{id}.json). Historial completo por defecto;
+      // las series de mercado (oro, merval) se acotan a la ventana con `ventana: true`.
+      const raw = await fetchLocal(serie.serieId, serie.ventana ? diasReq : null);
+      datos = serie.variacion
+        ? raw.slice(1).map((d, i) => ({
+            fecha: d.fecha,
+            valor: raw[i].valor > 0 ? +((d.valor / raw[i].valor - 1) * 100).toFixed(2) : null,
+          })).filter(d => d.valor !== null)
+        : raw;
     } else if (serie.fuente.startsWith('mock')) {
       datos = generarMock(serie.fuente, mesesReq);
     } else {

@@ -4,11 +4,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-**Correr el chat IA (Streamlit):**
-```bash
-streamlit run streamlit_app.py
-```
-
 **Generar JSONs de datos desde archivos Excel:**
 ```bash
 python subir_datos.py
@@ -37,7 +32,7 @@ Cubren las funciones puras de `lib.js` (formatFecha, agregarDatos, transformarEm
 ## Arquitectura
 
 ### Frontend (HTML + JS estático)
-- **`app.js`** es el núcleo de toda la lógica del frontend — se carga en todas las páginas y controla auth, fetch de datos, renderizado de gráficos y UI.
+- **`app.js`** es el núcleo de toda la lógica del frontend — se carga en todas las páginas y controla el fetch de datos, el renderizado de gráficos y la UI. No hay auth ni backend: el sitio es 100% estático.
 - **`SERIES`** (array en `app.js`) es la fuente de verdad de todos los indicadores: define fuente, IDs de API, colores, unidades, y si son `premium`.
 - La página activa se detecta con clases CSS en `<body>` (`page-datos`, `page-detalle`) — `app.js` usa estas flags para alterar su comportamiento (controles extra, historial ampliado, etc.).
 - `detalle.html` recibe el indicador vía query param `?id=` y renderiza el mismo componente de card pero expandido.
@@ -51,23 +46,19 @@ Cubren las funciones puras de `lib.js` (formatFecha, agregarDatos, transformarEm
 | **JSON local** | ICC Di Tella, EI Di Tella, indicadores REM, Merval, Oro | `data/{id}.json` generados por `subir_datos.py` y `fetch_mercados.py` |
 | **ArgentinaDatos** | Riesgo País (EMBI+) | REST público con CORS, `api.argentinadatos.com` |
 
-**Nota CORS / límites:** Yahoo Finance (Merval `^MERV`, Oro `GC=F`) bloquea CORS desde el browser y Alpha Vantage tiene límite de 25 req/día compartido. Por eso ambos se traen del lado servidor con `fetch_mercados.py` a `data/merval.json` y `data/oro.json`, y se consumen con `fuente: 'local'`. El oro es el futuro COMEX en USD/oz directo.
+**Nota CORS:** Yahoo Finance (Merval `^MERV`, Oro `GC=F`) bloquea CORS desde el browser. Por eso ambos se traen del lado servidor con `fetch_mercados.py` a `data/merval.json` y `data/oro.json`, y se consumen con `fuente: 'local'` + `ventana: true`. El oro es el futuro COMEX en USD/oz directo.
 
-### Datos locales (ICC, EI, REM)
+### Datos locales (ICC, EI, REM, Merval, Oro)
 - `subir_datos.py` parsea los Excel de UTDT (ICC, EI) y BCRA (REM) y genera `data/{id}.json`.
 - Cada JSON es un array de `{ fecha: "YYYY-MM-DD", valor: number }` ordenado por fecha.
-- `app.js` los carga con `fetch('data/{id}.json')` — sin dependencias externas.
+- `app.js` los carga con `fetch('data/{id}.json')` (`fuente: 'local'`) — sin dependencias externas ni base de datos.
+- Por defecto se carga el historial completo; las series de mercado (oro, merval) se acotan a su ventana con `ventana: true`.
 - Para actualizar: bajá el Excel nuevo, corrés `python subir_datos.py`, y deployás.
-
-### Chat IA
-- `streamlit_app.py` es una app Streamlit independiente que usa Google Gemini (`gemini-1.5-pro-latest`) como modelo.
-- Corre en `localhost:8501` y el frontend tiene un botón que abre esa URL en nueva pestaña.
-- Secrets: en producción (Streamlit Cloud) lee `GEMINI_API_KEY` de `st.secrets`; localmente desde `.env`.
 
 ## Agregar un nuevo indicador
 
 1. Agregarlo al array `SERIES` en `app.js` con su `fuente` correspondiente.
-2. Si la fuente es `supabase`, agregar los datos via `subir_datos.py` con una nueva llamada a `procesar_y_subir()`.
+2. Si la fuente es `local`, generar el `data/{id}.json` con `subir_datos.py` (o `fetch_mercados.py` para datos de mercado).
 3. Si la fuente es `bcra`, usar el ID numérico de variable de la API v4.0 del BCRA.
 
 ## Skill routing

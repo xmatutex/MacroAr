@@ -1,6 +1,5 @@
 # Archivos con secretos y configuraciones locales
 .env
-.streamlit/
+secrets.toml
 __pycache__/
-memoria.json
 .gstack/
