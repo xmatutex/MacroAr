@@ -1230,15 +1230,6 @@ function loadAll() {
     const categorias = [...new Set(SERIES.map(s => s.categoria || 'Otros'))];
     const slug = cat => `cat-${cat.replace(/\s+/g, '-').toLowerCase()}`;
 
-    // Menú scrolleable de categorías (sticky bajo el navbar)
-    const menu = document.createElement('nav');
-    menu.className = 'cat-menu';
-    menu.setAttribute('aria-label', 'Categorías de indicadores');
-    menu.innerHTML = categorias.map(cat =>
-      `<a class="cat-chip" href="#${slug(cat)}">${cat}</a>`
-    ).join('');
-    catContainer.parentElement.insertBefore(menu, catContainer);
-
     categorias.forEach(cat => {
       const section = document.createElement('div');
       section.className = 'category-section';
@@ -1254,22 +1245,6 @@ function loadAll() {
 
       seriesCat.forEach(serie => catGrid.appendChild(crearCard(serie)));
     });
-
-    // Resaltar el chip de la categoría visible al scrollear
-    const secciones = categorias.map(cat => document.getElementById(slug(cat)));
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach(en => {
-        if (en.isIntersecting) {
-          menu.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-          const chip = menu.querySelector(`.cat-chip[href="#${en.target.id}"]`);
-          if (chip) {
-            chip.classList.add('active');
-            chip.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
-          }
-        }
-      });
-    }, { rootMargin: '-120px 0px -70% 0px' });
-    secciones.forEach(s => s && obs.observe(s));
   } else if (grid) {
     seriesAMostrar.forEach(serie => grid.appendChild(crearCard(serie)));
 
@@ -1308,4 +1283,52 @@ function crearCardVerTodos() {
   return div;
 }
 
+// ─── Desplegable de categorías en el navbar ("Datos") ─────────────────────────
+function construirNavDatos() {
+  const datosLink = document.querySelector('.nav-links a[href="datos.html"]');
+  if (!datosLink) return;
+
+  const categorias = [...new Set(SERIES.map(s => s.categoria || 'Otros'))];
+  const slug = cat => `cat-${cat.replace(/\s+/g, '-').toLowerCase()}`;
+  const esPaginaDatos = !!datosLink.getAttribute('style'); // el link activo trae color inline
+
+  const wrap = document.createElement('div');
+  wrap.className = 'nav-dropdown';
+
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'nav-dropdown-toggle' + (esPaginaDatos ? ' active' : '');
+  toggle.setAttribute('aria-haspopup', 'true');
+  toggle.setAttribute('aria-expanded', 'false');
+  toggle.innerHTML = 'Datos <span class="nav-caret" aria-hidden="true">▾</span>';
+
+  const menu = document.createElement('div');
+  menu.className = 'nav-dropdown-menu';
+  menu.setAttribute('role', 'menu');
+  menu.innerHTML =
+    `<a class="nav-dropdown-item nav-dropdown-all" role="menuitem" href="datos.html">Ver catálogo completo</a>` +
+    categorias.map(cat =>
+      `<a class="nav-dropdown-item" role="menuitem" href="datos.html#${slug(cat)}">${cat}</a>`
+    ).join('');
+
+  wrap.appendChild(toggle);
+  wrap.appendChild(menu);
+  datosLink.replaceWith(wrap);
+
+  const cerrar = () => { wrap.classList.remove('open'); toggle.setAttribute('aria-expanded', 'false'); };
+
+  toggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const abierto = wrap.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+  });
+  // Al elegir una categoría en la misma página de Datos, cerrar el menú
+  menu.querySelectorAll('.nav-dropdown-item').forEach(item =>
+    item.addEventListener('click', cerrar)
+  );
+  document.addEventListener('click', (e) => { if (!wrap.contains(e.target)) cerrar(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrar(); });
+}
+
+construirNavDatos();
 loadAll();
