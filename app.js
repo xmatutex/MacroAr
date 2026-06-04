@@ -10,6 +10,8 @@ const isDetallePage = document.body.classList.contains('page-detalle');
 const SERIES = [
   {
     id:       'tc-oficial',
+    slug:     'dolar-oficial',
+    descripcion: 'Cotización del dólar oficial en Argentina: serie histórica actualizada con gráfico interactivo. Seguí la evolución del tipo de cambio oficial día a día.',
     titulo:   'Tipo de Cambio Oficial',
     categoria: 'Mercado Cambiario',
     fuente:   'bluelytics',
@@ -23,6 +25,8 @@ const SERIES = [
   },
   {
     id:      'tc-blue',
+    slug:    'dolar-blue',
+    descripcion: 'Cotización del dólar blue en Argentina: serie histórica y evolución diaria del dólar paralelo, con gráfico interactivo.',
     titulo:  'Dólar Blue',
     categoria: 'Mercado Cambiario',
     fuente:  'bluelytics',
@@ -34,6 +38,8 @@ const SERIES = [
   },
   {
     id:        'inflacion',
+    slug:      'inflacion-mensual',
+    descripcion: 'Inflación mensual de Argentina (IPC INDEC): serie histórica de la variación de precios mes a mes, con gráfico interactivo.',
     titulo:    'Inflación Mensual (IPC)',
     categoria: 'Precios e Inflación',
     fuente:    'indec',
@@ -49,6 +55,8 @@ const SERIES = [
   },
   {
     id:       'emae',
+    slug:     'actividad-economica-emae',
+    descripcion: 'Actividad económica de Argentina (EMAE INDEC): serie histórica del Estimador Mensual de Actividad Económica, estacional y desestacionalizada.',
     titulo:   'Actividad Económica (EMAE)',
     categoria: 'Actividad Económica',
     fuente:   'emae',
@@ -66,6 +74,8 @@ const SERIES = [
   },
   {
     id:        'icc-ditella',
+    slug:      'confianza-del-consumidor',
+    descripcion: 'Índice de Confianza del Consumidor (UTDT) en Argentina: variación mensual y serie histórica, con gráfico interactivo.',
     titulo:    'Confianza del Consumidor (Var. Mensual)',
     categoria: 'Confianza y Expectativas',
     fuente:    'local',
@@ -79,6 +89,8 @@ const SERIES = [
   },
   {
     id:        'ei-ditella',
+    slug:      'expectativas-de-inflacion',
+    descripcion: 'Expectativas de inflación de los argentinos (UTDT): serie histórica de cuánta inflación espera la gente, con gráfico interactivo.',
     titulo:    'Expectativas de Inflación (Di Tella)',
     categoria: 'Confianza y Expectativas',
     fuente:    'local',
@@ -90,6 +102,8 @@ const SERIES = [
   },
   {
     id:        'rem-ipc',
+    slug:      'rem-inflacion-general',
+    descripcion: 'Inflación general esperada según el REM del BCRA (Relevamiento de Expectativas de Mercado): proyecciones de analistas, serie histórica.',
     titulo:    'Inflación General (REM)',
     categoria: 'Expectativas (REM)',
     fuente:    'local',
@@ -101,6 +115,8 @@ const SERIES = [
   },
   {
     id:        'rem-ipc-nucleo',
+    slug:      'rem-inflacion-nucleo',
+    descripcion: 'Inflación núcleo esperada según el REM del BCRA: proyecciones de los analistas de mercado, serie histórica con gráfico interactivo.',
     titulo:    'Inflación Núcleo (REM)',
     categoria: 'Expectativas (REM)',
     fuente:    'local',
@@ -112,6 +128,8 @@ const SERIES = [
   },
   {
     id:        'rem-pib',
+    slug:      'rem-pib',
+    descripcion: 'Evolución esperada del PIB de Argentina según el REM del BCRA: proyecciones de crecimiento de los analistas, serie histórica.',
     titulo:    'Evolución del PIB (REM)',
     categoria: 'Expectativas (REM)',
     fuente:    'local',
@@ -123,6 +141,8 @@ const SERIES = [
   },
   {
     id:        'rem-tcn',
+    slug:      'rem-tipo-de-cambio',
+    descripcion: 'Tipo de cambio nominal esperado según el REM del BCRA: proyección del dólar de los analistas de mercado, serie histórica.',
     titulo:    'Tipo de Cambio Nominal (REM)',
     categoria: 'Expectativas (REM)',
     fuente:    'local',
@@ -134,6 +154,8 @@ const SERIES = [
   },
   {
     id:        'rem-badlar',
+    slug:      'rem-tasa-badlar',
+    descripcion: 'Tasa BADLAR esperada según el REM del BCRA: proyección de la tasa de interés de los analistas de mercado, serie histórica.',
     titulo:    'Tasa BADLAR (REM)',
     categoria: 'Expectativas (REM)',
     fuente:    'local',
@@ -145,6 +167,8 @@ const SERIES = [
   },
   {
     id:        'rem-expo',
+    slug:      'rem-exportaciones',
+    descripcion: 'Exportaciones FOB esperadas según el REM del BCRA: proyección del comercio exterior de los analistas, serie histórica.',
     titulo:    'Exportaciones FOB (REM)',
     categoria: 'Expectativas (REM)',
     fuente:    'local',
@@ -156,6 +180,8 @@ const SERIES = [
   },
   {
     id:        'rem-impo',
+    slug:      'rem-importaciones',
+    descripcion: 'Importaciones CIF esperadas según el REM del BCRA: proyección del comercio exterior de los analistas, serie histórica.',
     titulo:    'Importaciones CIF (REM)',
     categoria: 'Expectativas (REM)',
     fuente:    'local',
@@ -167,6 +193,8 @@ const SERIES = [
   },
   {
     id:        'rem-desocupacion',
+    slug:      'rem-desocupacion',
+    descripcion: 'Desocupación esperada según el REM del BCRA: proyección de la tasa de desempleo de los analistas, serie histórica.',
     titulo:    'Desocupación (REM)',
     categoria: 'Expectativas (REM)',
     fuente:    'local',
@@ -178,6 +206,8 @@ const SERIES = [
   },
   {
     id:        'rem-resultado',
+    slug:      'rem-resultado-primario',
+    descripcion: 'Resultado primario fiscal esperado según el REM del BCRA: proyección de las cuentas públicas de los analistas, serie histórica.',
     titulo:    'Resultado Primario (REM)',
     categoria: 'Expectativas (REM)',
     fuente:    'local',
@@ -189,6 +219,8 @@ const SERIES = [
   },
   {
     id:        'reservas-bcra',
+    slug:      'reservas-internacionales',
+    descripcion: 'Reservas internacionales del BCRA: serie histórica de las reservas en dólares del Banco Central de Argentina, con gráfico interactivo.',
     titulo:    'Reservas Internacionales',
     categoria: 'Banco Central',
     fuente:    'bcra',
@@ -202,6 +234,8 @@ const SERIES = [
   },
   {
     id:        'base-monetaria',
+    slug:      'base-monetaria',
+    descripcion: 'Base monetaria de Argentina: serie histórica del dinero emitido por el BCRA, con gráfico interactivo y datos para descargar.',
     titulo:    'Base Monetaria',
     categoria: 'Banco Central',
     fuente:    'bcra',
@@ -214,6 +248,8 @@ const SERIES = [
   },
   {
     id:        'tasa-badlar',
+    slug:      'tasa-badlar',
+    descripcion: 'Tasa BADLAR de bancos privados (BCRA): serie histórica de la tasa de interés de referencia, con gráfico interactivo.',
     titulo:    'Tasa BADLAR (Bancos Privados)',
     categoria: 'Sistema Financiero',
     fuente:    'bcra',
@@ -226,6 +262,8 @@ const SERIES = [
   },
   {
     id:        'tc-mayorista',
+    slug:      'dolar-mayorista',
+    descripcion: 'Dólar mayorista (Com. A3500 del BCRA) en Argentina: serie histórica del tipo de cambio mayorista, con gráfico interactivo.',
     titulo:    'Tipo de Cambio Mayorista',
     categoria: 'Mercado Cambiario',
     fuente:    'bcra',
@@ -237,6 +275,8 @@ const SERIES = [
   },
   {
     id:        'oro-usd',
+    slug:      'precio-del-oro',
+    descripcion: 'Precio del oro (futuro COMEX en USD/oz): serie histórica de la cotización internacional del oro, con gráfico interactivo.',
     titulo:    'Precio del Oro',
     categoria: 'Commodities',
     fuente:    'local',
@@ -250,6 +290,8 @@ const SERIES = [
   // ─── Nuevos indicadores ───────────────────────────────────────────────────────
   {
     id:        'riesgo-pais',
+    slug:      'riesgo-pais',
+    descripcion: 'Riesgo país de Argentina (EMBI+): serie histórica del índice de riesgo país en puntos básicos, actualizado, con gráfico interactivo.',
     titulo:    'Riesgo País (EMBI+)',
     categoria: 'Mercado de Capitales',
     fuente:    'argentinadatos',
@@ -262,6 +304,8 @@ const SERIES = [
   },
   {
     id:        'merval-ars',
+    slug:      'merval',
+    descripcion: 'Índice Merval de la Bolsa de Buenos Aires: serie histórica de la cotización del principal índice bursátil argentino, con gráfico interactivo.',
     titulo:    'Merval',
     categoria: 'Mercado de Capitales',
     fuente:    'local',
@@ -274,6 +318,8 @@ const SERIES = [
   },
   {
     id:        'inflacion-anual',
+    slug:      'inflacion-interanual',
+    descripcion: 'Inflación interanual de Argentina (IPC): serie histórica de la variación de precios respecto a 12 meses atrás, con gráfico interactivo.',
     titulo:    'Inflación Interanual (IPC)',
     categoria: 'Precios e Inflación',
     fuente:    'bcra',
@@ -286,6 +332,8 @@ const SERIES = [
   },
   {
     id:        'tasa-plazo-fijo',
+    slug:      'tasa-plazo-fijo',
+    descripcion: 'Tasa de plazo fijo a 30 días en Argentina (BCRA): serie histórica de la tasa de interés para depósitos, con gráfico interactivo.',
     titulo:    'Tasa Plazo Fijo (30 días)',
     categoria: 'Sistema Financiero',
     fuente:    'bcra',
@@ -495,7 +543,7 @@ function crearCard(serie) {
     div.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
     const irADetalle = (e) => {
       if (e.target.tagName.toLowerCase() === 'button' || e.target.tagName.toLowerCase() === 'input') return;
-      window.location.href = `detalle.html?id=${serie.id}`;
+      window.location.href = `/indicador/${serie.slug || serie.id}`;
     };
     div.onclick = irADetalle;
     div.addEventListener('keydown', (e) => {
@@ -1157,9 +1205,11 @@ function loadAll() {
   if (catContainer) catContainer.innerHTML = '';
 
   if (typeof isDetallePage !== 'undefined' && isDetallePage) {
+    // Las páginas pre-generadas (/indicador/<slug>) traen el id horneado en
+    // data-serie-id; los links viejos siguen funcionando con ?id=.
     const params = new URLSearchParams(window.location.search);
-    const serieId = params.get('id');
-    const serie = SERIES.find(s => s.id === serieId);
+    const serieId = document.body.dataset.serieId || params.get('id');
+    const serie = SERIES.find(s => s.id === serieId || s.slug === serieId);
     
     const container = document.getElementById('detalle-content');
     if (!container) return;
@@ -1171,6 +1221,17 @@ function loadAll() {
 
     // Título de pestaña dinámico por indicador (SEO + UX)
     document.title = `${serie.titulo} — MacroAr`;
+
+    // Canonical → la URL limpia del indicador (refuerza las páginas pre-generadas
+    // y canonicaliza los links viejos detalle.html?id=).
+    const urlCanonica = `https://macroar.com.ar/indicador/${serie.slug || serie.id}`;
+    let canon = document.querySelector('link[rel="canonical"]');
+    if (!canon) {
+      canon = document.createElement('link');
+      canon.setAttribute('rel', 'canonical');
+      document.head.appendChild(canon);
+    }
+    canon.setAttribute('href', urlCanonica);
 
 
 
@@ -1275,7 +1336,7 @@ function crearCardVerTodos() {
   div.setAttribute('aria-label', 'Ver todos los indicadores');
   div.onmouseover = () => { div.style.background = '#f1f5f9'; div.style.borderColor = '#94a3b8'; };
   div.onmouseout  = () => { div.style.background = '#f8fafc'; div.style.borderColor = '#cbd5e1'; };
-  const irADatos = () => { window.location.href = 'datos.html'; };
+  const irADatos = () => { window.location.href = '/datos'; };
   div.onclick = irADatos;
   div.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); irADatos(); }
@@ -1290,7 +1351,8 @@ function crearCardVerTodos() {
 
 // ─── Desplegable de categorías en el navbar ("Datos") ─────────────────────────
 function construirNavDatos() {
-  const datosLink = document.querySelector('.nav-links a[href="datos.html"]');
+  const datosLink = document.querySelector('.nav-links a[href$="datos.html"]')
+    || document.querySelector('.nav-links a[href="/datos"]');
   if (!datosLink) return;
 
   const categorias = [...new Set(SERIES.map(s => s.categoria || 'Otros'))];
@@ -1311,14 +1373,14 @@ function construirNavDatos() {
   menu.className = 'nav-dropdown-menu';
   menu.setAttribute('role', 'menu');
 
-  let html = `<a class="nav-dropdown-item nav-dropdown-all" role="menuitem" href="datos.html">Ver catálogo completo</a>`;
+  let html = `<a class="nav-dropdown-item nav-dropdown-all" role="menuitem" href="/datos">Ver catálogo completo</a>`;
   categorias.forEach(cat => {
     const seriesCat = SERIES.filter(s => (s.categoria || 'Otros') === cat);
     const subItems = seriesCat.map(s =>
-      `<a class="nav-submenu-item" role="menuitem" href="detalle.html?id=${s.id}">${s.titulo}</a>`
+      `<a class="nav-submenu-item" role="menuitem" href="/indicador/${s.slug || s.id}">${s.titulo}</a>`
     ).join('');
     html += `<div class="nav-dropdown-cat">
-      <a class="nav-dropdown-item nav-cat-link" role="menuitem" href="datos.html#${slug(cat)}">${cat}<span class="nav-subcaret" aria-hidden="true">›</span></a>
+      <a class="nav-dropdown-item nav-cat-link" role="menuitem" href="/datos#${slug(cat)}">${cat}<span class="nav-subcaret" aria-hidden="true">›</span></a>
       <div class="nav-submenu" role="menu">${subItems}</div>
     </div>`;
   });

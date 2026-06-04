@@ -2,5 +2,6 @@ Datos BCRA/
 Datos UTDT/
 subir_datos.py
 fetch_mercados.py
+generar-paginas.js
 requirements.txt
 .gstack/

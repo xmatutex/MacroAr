@@ -21,7 +21,13 @@ Genera `data/merval.json`. Se usa porque Yahoo Finance bloquea CORS desde el bro
 pip install -r requirements.txt
 ```
 
-**El frontend no tiene build step** — es HTML/CSS/JS estático. Abrí `index.html` directamente en el navegador o servilo con cualquier servidor estático.
+**Generar las páginas SEO por indicador:**
+```bash
+node generar-paginas.js
+```
+Lee el array `SERIES` de `app.js` y genera una página estática por indicador en `indicador/{slug}.html` (con `<title>`, `description`, `canonical` y Open Graph propios), y regenera `sitemap.xml`. Correr cada vez que se agreguen o cambien indicadores (slug/título/descripción).
+
+**El frontend no tiene build step de bundling** — es HTML/CSS/JS estático. Abrí `index.html` directamente o servilo con cualquier servidor estático. Las URLs limpias (`/indicador/<slug>`, `/datos`) funcionan en Vercel vía `cleanUrls`.
 
 **Correr los tests:**
 ```bash
@@ -35,7 +41,8 @@ Cubren las funciones puras de `lib.js` (formatFecha, agregarDatos, transformarEm
 - **`app.js`** es el núcleo de toda la lógica del frontend — se carga en todas las páginas y controla el fetch de datos, el renderizado de gráficos y la UI. No hay auth ni backend: el sitio es 100% estático.
 - **`SERIES`** (array en `app.js`) es la fuente de verdad de todos los indicadores: define fuente, IDs de API, colores, unidades, y si son `premium`.
 - La página activa se detecta con clases CSS en `<body>` (`page-datos`, `page-detalle`) — `app.js` usa estas flags para alterar su comportamiento (controles extra, historial ampliado, etc.).
-- `detalle.html` recibe el indicador vía query param `?id=` y renderiza el mismo componente de card pero expandido.
+- **Páginas por indicador (SEO):** cada indicador tiene una página estática pre-generada en `indicador/<slug>.html` (URL limpia `/indicador/<slug>`), con título/descripción/canonical/OG propios. El `<body>` trae `data-serie-id` horneado; `app.js` lo lee y renderiza el gráfico ampliado. Se generan con `node generar-paginas.js`. El viejo `detalle.html?id=` sigue funcionando por compatibilidad y canonicaliza hacia la URL limpia.
+- Cada serie de `SERIES` tiene `slug` (URL) y `descripcion` (meta SEO) — son la fuente de verdad que consume el generador.
 
 ### Fuentes de datos (todas consumidas en el browser)
 | Fuente | Qué provee | Cómo |

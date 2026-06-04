@@ -3,45 +3,49 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Detalle del indicador — MacroAr</title>
-  <meta name="description" content="Gráfico interactivo e histórico de un indicador macroeconómico de Argentina, con zoom, agrupación por período y exportación a CSV o PNG. Datos del BCRA, INDEC y más.">
+  <title>Inflación General (REM) — MacroAr</title>
+  <meta name="description" content="Inflación general esperada según el REM del BCRA (Relevamiento de Expectativas de Mercado): proyecciones de analistas, serie histórica.">
+  <link rel="canonical" href="https://macroar.com.ar/indicador/rem-inflacion-general">
   <meta name="theme-color" content="#1c3c63">
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <meta property="og:type" content="website">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta property="og:type" content="article">
   <meta property="og:site_name" content="MacroAr">
   <meta property="og:locale" content="es_AR">
-  <meta property="og:title" content="Detalle del indicador — MacroAr">
-  <meta property="og:description" content="Gráfico interactivo e histórico de un indicador macroeconómico de Argentina.">
+  <meta property="og:url" content="https://macroar.com.ar/indicador/rem-inflacion-general">
+  <meta property="og:title" content="Inflación General (REM) — MacroAr">
+  <meta property="og:description" content="Inflación general esperada según el REM del BCRA (Relevamiento de Expectativas de Mercado): proyecciones de analistas, serie histórica.">
   <meta property="og:image" content="https://macroar.com.ar/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Inflación General (REM) — MacroAr">
+  <meta name="twitter:description" content="Inflación general esperada según el REM del BCRA (Relevamiento de Expectativas de Mercado): proyecciones de analistas, serie histórica.">
   <meta name="twitter:image" content="https://macroar.com.ar/og-image.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 </head>
-<body class="page-detalle">
+<body class="page-detalle" data-serie-id="rem-ipc">
 
   <!-- Navbar -->
   <nav class="navbar">
     <div class="nav-inner">
-      <a href="index.html" class="nav-logo" aria-label="MacroAr — ir al inicio">Macro<span>Ar</span></a>
+      <a href="/" class="nav-logo" aria-label="MacroAr — ir al inicio">Macro<span>Ar</span></a>
       <div class="nav-links">
-        <a href="index.html">Inicio</a>
-        <a href="datos.html">Datos</a>
+        <a href="/">Inicio</a>
+        <a href="/datos">Datos</a>
       </div>
       <div class="nav-actions"></div>
     </div>
   </nav>
 
-  <!-- Contenedor Principal de la Vista Detallada -->
+  <!-- Contenedor principal de la vista detallada -->
   <main class="detalle-container" id="detalle-container">
-    <!-- Usa el historial del navegador para volver exactamente donde estábamos -->
-    <a href="datos.html" class="btn-back" id="btn-back">← Volver atrás</a>
-    
+    <a href="/datos" class="btn-back" id="btn-back">← Volver atrás</a>
     <div id="detalle-content">
       <p style="text-align: center; color: #64748b; padding: 2rem;">Cargando información ampliada del indicador...</p>
     </div>
@@ -60,7 +64,7 @@
     </div>
   </footer>
 
-  <script src="lib.js"></script>
-  <script src="app.js"></script>
+  <script src="/lib.js"></script>
+  <script src="/app.js"></script>
 </body>
 </html>
