@@ -44,12 +44,12 @@ body {
   font-family: 'Poppins', sans-serif;
   font-size: 1.3rem;
   font-weight: 800;
-  color: #fff;
+  color: var(--teal);
   letter-spacing: -0.5px;
   flex-shrink: 0;
   text-decoration: none;
 }
-.nav-logo span { color: var(--teal); }
+.nav-logo span { color: #fff; }
 
 .nav-links {
   display: flex;
@@ -398,10 +398,10 @@ footer {
   font-family: 'Poppins', sans-serif;
   font-size: 1.1rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--teal);
   flex-shrink: 0;
 }
-.footer-logo span { color: var(--teal); }
+.footer-logo span { color: #fff; }
 
 .footer-desc {
   font-size: 0.8rem;
