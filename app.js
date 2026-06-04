@@ -1164,6 +1164,9 @@ function loadAll() {
       return;
     }
 
+    // Título de pestaña dinámico por indicador (SEO + UX)
+    document.title = `${serie.titulo} — MacroAr`;
+
 
 
     container.innerHTML = `
