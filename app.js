@@ -1127,7 +1127,10 @@ async function cargarSerie(serie) {
       if (btnExport) btnExport.style.display = 'inline-block';
 
       const btnPng = document.getElementById(`btn-png-${serie.id}`);
-      if (btnPng) btnPng.style.display = 'inline-block';
+      if (btnPng) {
+        btnPng.style.display = 'inline-block';
+        btnPng.onclick = () => descargarPNG(serie.id, serie.titulo);
+      }
     }
 
   } catch (err) {
@@ -1173,8 +1176,8 @@ function loadAll() {
       <div class="detalle-header">
         <h1 class="detalle-title" style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
           ${serie.titulo}
-          <button id="btn-export-${serie.id}" style="display: none; font-size: 0.85rem; padding: 4px 10px; border-radius: 6px; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; color: var(--navy); font-weight: 500; font-family: inherit; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'" title="Descargar datos en CSV">⬇️ Exportar CSV</button>
-          <button id="btn-png-${serie.id}" style="display: none; font-size: 0.85rem; padding: 4px 10px; border-radius: 6px; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; color: var(--navy); font-weight: 500; font-family: inherit; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'" title="Descargar gráfico como imagen" onclick="descargarPNG('${serie.id}', '${serie.titulo}')">🖼️ Descargar PNG</button>
+          <button id="btn-export-${serie.id}" class="btn-export-mini" style="display: none;" title="Descargar datos en CSV">⬇️ Exportar CSV</button>
+          <button id="btn-png-${serie.id}" class="btn-export-mini" style="display: none;" title="Descargar gráfico como imagen">🖼️ Descargar PNG</button>
         </h1>
         <p class="detalle-meta">
           Categoría: ${serie.categoria} · Fuente: ${serie.fuente.toUpperCase()}${serie.anioBase ? ` · Base ${serie.anioBase}=100` : ` · Unidad: ${serie.unidad}`}
@@ -1337,4 +1340,14 @@ function construirNavDatos() {
 }
 
 construirNavDatos();
+
+// Botón "Volver atrás" sin javascript: URI (compatible con CSP).
+// href="datos.html" es el fallback; si hay historial, volvemos a la página previa.
+const _btnBack = document.getElementById('btn-back');
+if (_btnBack) {
+  _btnBack.addEventListener('click', (e) => {
+    if (window.history.length > 1) { e.preventDefault(); window.history.back(); }
+  });
+}
+
 loadAll();

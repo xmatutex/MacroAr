@@ -92,6 +92,21 @@ body {
 }
 .btn-primary:hover   { background: var(--teal-dark); }
 .btn-primary:active  { transform: scale(0.97); }
+
+/* Botones chicos de exportar (CSV / PNG) en la vista detalle */
+.btn-export-mini {
+  font-size: 0.85rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: var(--navy);
+  font-weight: 500;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.btn-export-mini:hover { background: #f8fafc; }
 .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .btn-primary.full-width { width: 100%; }
