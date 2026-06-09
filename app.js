@@ -446,8 +446,10 @@ async function fetchEmae(seriesEmae) {
 }
 
 async function fetchLocal(serieId, dias = null) {
-  const res = await fetch(`data/${serieId}.json`);
-  if (!res.ok) throw new Error(`No se encontró data/${serieId}.json`);
+  // Ruta root-absoluta: funciona tanto en las páginas de la raíz como en las
+  // URLs limpias anidadas (/indicador/<slug>), donde 'data/...' relativo daría 404.
+  const res = await fetch(`/data/${serieId}.json`);
+  if (!res.ok) throw new Error(`No se encontró /data/${serieId}.json`);
   const data = await res.json();
   if (dias == null) return data;
   const desde = isoHace(dias);
