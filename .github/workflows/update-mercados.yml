@@ -1,9 +1,10 @@
 name: Actualizar datos de mercado
 
-# Refresca data/merval.json desde Yahoo Finance.
-# Los demás indicadores (BCRA, INDEC, Bluelytics, ArgentinaDatos, Alpha Vantage)
-# se consumen en vivo desde el browser, así que no necesitan actualización acá.
-# Los datos de Excel (REM, ICC, EI) se actualizan a mano con subir_datos.py.
+# Refresca data/merval.json (y oro) desde Yahoo Finance.
+# Los demás indicadores (BCRA, INDEC, Bluelytics, ArgentinaDatos) se consumen en
+# vivo desde el browser, así que no necesitan actualización acá.
+# ICC y EI (UTDT) se actualizan solos con fetch_utdt.py (.github/workflows/update-utdt.yml).
+# Los REM (BCRA) siguen siendo carga manual con subir_datos.py.
 
 on:
   schedule:

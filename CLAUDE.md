@@ -16,6 +16,12 @@ python fetch_mercados.py
 ```
 Genera `data/merval.json`. Se usa porque Yahoo Finance bloquea CORS desde el browser.
 
+**Traer ICC y EI (UTDT) automáticamente desde la web:**
+```bash
+python fetch_utdt.py
+```
+Scrapea la página de "Serie Histórica" de UTDT (ICC y EI), extrae el link de descarga `download.php?fname=...xls` (cambia cuando suben datos nuevos) y genera `data/icc.json` y `data/ei.json`. Requiere User-Agent de navegador (UTDT tiene anti-bot). Corre solo cada mes vía `.github/workflows/update-utdt.yml` (día 22). Reemplaza la carga manual de ICC/EI; los **REM** del BCRA siguen siendo manuales con `subir_datos.py`.
+
 **Instalar dependencias Python:**
 ```bash
 pip install -r requirements.txt
