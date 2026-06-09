@@ -4,6 +4,7 @@
 const isToolsPage = document.body.classList.contains('page-tools');
 const isDatosPage = document.body.classList.contains('page-datos');
 const isDetallePage = document.body.classList.contains('page-detalle');
+const isLabPage = document.body.classList.contains('page-laboratorio');
 
 // ─── Configuración de series ──────────────────────────────────────────────────
 
@@ -1095,6 +1096,40 @@ function actualizarCalculadora() {
 }
 
 
+// ─── Fetch de datos por fuente (sin render) ───────────────────────────────────
+// Devuelve el array [{fecha, valor}] de una serie según su fuente. Reusado por
+// cargarSerie (con render) y por el Laboratorio (solo datos). `completo` = true
+// trae el historial entero (no acota EMAE a los últimos meses).
+async function obtenerDatosSerie(serie, diasReq, mesesReq, completo) {
+  const variacionPct = (raw) => raw.slice(1).map((d, i) => ({
+    fecha: d.fecha,
+    valor: raw[i].valor > 0 ? +((d.valor / raw[i].valor - 1) * 100).toFixed(2) : null,
+  })).filter(d => d.valor !== null);
+
+  if (serie.fuente === 'bluelytics') {
+    return await fetchBluelytics(serie.tipo_tc, diasReq);
+  } else if (serie.fuente === 'bcra') {
+    const raw = await fetchBcra(serie.serieId, diasReq);
+    return serie.variacion ? variacionPct(raw) : raw;
+  } else if (serie.fuente === 'argentinadatos') {
+    return await fetchArgentinaDatos(serie.serieId, diasReq);
+  } else if (serie.fuente === 'emae') {
+    const emae = await fetchEmae(serie.seriesEmae);
+    let datos = emae.desest;  // por defecto: desestacionalizada
+    if (!completo) datos = datos.slice(-(serie.meses || 36));
+    return datos;
+  } else if (serie.fuente === 'local') {
+    // JSON local; historial completo salvo series de mercado con `ventana: true`.
+    const raw = await fetchLocal(serie.serieId, serie.ventana ? diasReq : null);
+    return serie.variacion ? variacionPct(raw) : raw;
+  } else if (serie.fuente.startsWith('mock')) {
+    return generarMock(serie.fuente, mesesReq);
+  } else {
+    const raw = await fetchIndec(serie.serieId, mesesReq);
+    return serie.variacion ? variacionPct(raw) : raw;
+  }
+}
+
 // ─── Carga de cada serie ──────────────────────────────────────────────────────
 
 async function cargarSerie(serie) {
@@ -1102,53 +1137,16 @@ async function cargarSerie(serie) {
   const meta  = document.getElementById(`meta-${serie.id}`);
 
   try {
-    let datos;
     let diasReq = serie.dias;
     let mesesReq = serie.meses;
+    const completo = isToolsPage || isDetallePage;
 
-    if (isToolsPage || isDetallePage) {
+    if (completo) {
       diasReq  = 3650;
       mesesReq = 120;
     }
 
-    if (serie.fuente === 'bluelytics') {
-      datos = await fetchBluelytics(serie.tipo_tc, diasReq);
-    } else if (serie.fuente === 'bcra') {
-      // La API del BCRA filtra por días hacia atrás
-      const raw = await fetchBcra(serie.serieId, diasReq);
-      datos = serie.variacion
-        ? raw.slice(1).map((d, i) => ({
-            fecha: d.fecha,
-            valor: raw[i].valor > 0 ? +((d.valor / raw[i].valor - 1) * 100).toFixed(2) : null,
-          })).filter(d => d.valor !== null)
-        : raw;
-    } else if (serie.fuente === 'argentinadatos') {
-      datos = await fetchArgentinaDatos(serie.serieId, diasReq);
-    } else if (serie.fuente === 'emae') {
-      const emae = await fetchEmae(serie.seriesEmae);
-      datos = emae.desest;  // por defecto: desestacionalizada (indica si la economía creció)
-      if (!(isToolsPage || isDetallePage)) datos = datos.slice(-(serie.meses || 36));
-    } else if (serie.fuente === 'local') {
-      // JSON local (data/{id}.json). Historial completo por defecto;
-      // las series de mercado (oro, merval) se acotan a la ventana con `ventana: true`.
-      const raw = await fetchLocal(serie.serieId, serie.ventana ? diasReq : null);
-      datos = serie.variacion
-        ? raw.slice(1).map((d, i) => ({
-            fecha: d.fecha,
-            valor: raw[i].valor > 0 ? +((d.valor / raw[i].valor - 1) * 100).toFixed(2) : null,
-          })).filter(d => d.valor !== null)
-        : raw;
-    } else if (serie.fuente.startsWith('mock')) {
-      datos = generarMock(serie.fuente, mesesReq);
-    } else {
-      const raw   = await fetchIndec(serie.serieId, mesesReq);
-      datos = serie.variacion
-        ? raw.slice(1).map((d, i) => ({
-            fecha: d.fecha,
-            valor: raw[i].valor > 0 ? +((d.valor / raw[i].valor - 1) * 100).toFixed(2) : null,
-          })).filter(d => d.valor !== null)
-        : raw;
-    }
+    const datos = await obtenerDatosSerie(serie, diasReq, mesesReq, completo);
 
     if (!datos.length) throw new Error('Sin datos disponibles');
 
@@ -1196,6 +1194,10 @@ async function cargarSerie(serie) {
 // ─── Inicialización ───────────────────────────────────────────────────────────
 
 function loadAll() {
+  // El Laboratorio maneja su propia carga (laboratorio.js); app.js solo aporta
+  // SERIES + obtenerDatosSerie. No renderizamos cards/charts acá.
+  if (isLabPage) return;
+
   _bluelyticsCache = null;
 
   const grid = document.getElementById('grid');

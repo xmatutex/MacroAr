@@ -99,7 +99,89 @@ function transformarEmae(data, lectura) {
   })).filter(d => d.valor != null);
 }
 
+// ─── Estadística para el Laboratorio ──────────────────────────────────────────
+
+// Correlación de Pearson entre dos arrays numéricos de igual largo.
+// Devuelve null si n < 2 o si alguna serie no tiene varianza (división por cero).
+function pearson(a, b) {
+  const n = Math.min(a.length, b.length);
+  if (n < 2) return null;
+  let sa = 0, sb = 0;
+  for (let i = 0; i < n; i++) { sa += a[i]; sb += b[i]; }
+  const ma = sa / n, mb = sb / n;
+  let num = 0, da = 0, db = 0;
+  for (let i = 0; i < n; i++) {
+    const xa = a[i] - ma, xb = b[i] - mb;
+    num += xa * xb; da += xa * xa; db += xb * xb;
+  }
+  if (da === 0 || db === 0) return null; // serie constante: sin varianza
+  return num / Math.sqrt(da * db);
+}
+
+// Correlación cruzada para detectar lead/lag entre dos series alineadas y de
+// igual frecuencia. Prueba desfasar en [-maxLag, maxLag] y devuelve el lag que
+// maximiza |r|. Convención: lag > 0 significa que `a` ADELANTA a `b` (a se mueve
+// antes). minOverlap evita lags con muy pocos puntos en común.
+function crossCorrelation(a, b, maxLag = 12, minOverlap = 6) {
+  let best = { lag: 0, r: null, n: 0 };
+  const lim = Math.min(maxLag, a.length - 1, b.length - 1);
+  for (let lag = -lim; lag <= lim; lag++) {
+    const xa = [], xb = [];
+    for (let i = 0; i < a.length; i++) {
+      const j = i + lag;               // a[i] vs b[i+lag]
+      if (j >= 0 && j < b.length) { xa.push(a[i]); xb.push(b[j]); }
+    }
+    if (xa.length < minOverlap) continue;
+    const r = pearson(xa, xb);
+    if (r == null) continue;
+    const mejora = best.r == null || Math.abs(r) > Math.abs(best.r) + 1e-12;
+    const empateMasCerca = best.r != null &&
+      Math.abs(Math.abs(r) - Math.abs(best.r)) <= 1e-12 &&
+      Math.abs(lag) < Math.abs(best.lag);
+    if (mejora || empateMasCerca) best = { lag, r, n: xa.length };
+  }
+  return best;
+}
+
+// Normaliza un array numérico según el modo:
+//  'niveles'   -> tal cual
+//  'variacion' -> variación % punto a punto (devuelve n-1 elementos)
+//  'indice'    -> índice base 100 en el primer punto
+function normalizar(arr, modo) {
+  if (!arr || !arr.length) return [];
+  if (modo === 'variacion') {
+    const out = [];
+    for (let i = 1; i < arr.length; i++) {
+      out.push(arr[i - 1] ? +(((arr[i] / arr[i - 1]) - 1) * 100).toFixed(2) : 0);
+    }
+    return out;
+  }
+  if (modo === 'indice') {
+    const base = arr[0];
+    if (!base) return arr.slice();
+    return arr.map(v => +((v / base) * 100).toFixed(2));
+  }
+  return arr.slice(); // niveles
+}
+
+// Alinea dos series [{fecha,valor}] por clave de fecha (intersección). Asume que
+// ambas ya están a la misma frecuencia (ej: agregarDatos(., 'mensual')).
+// Devuelve { fechas:[], a:[números], b:[números], n } con los períodos en común.
+function alinearSeries(serieA, serieB) {
+  const mapB = new Map(serieB.map(d => [d.fecha, d.valor]));
+  const fechas = [], a = [], b = [];
+  for (const d of serieA) {
+    if (mapB.has(d.fecha)) {
+      fechas.push(d.fecha);
+      a.push(d.valor);
+      b.push(mapB.get(d.fecha));
+    }
+  }
+  return { fechas, a, b, n: fechas.length };
+}
+
 // Doble export: en Node se importan; en el browser quedan como globales.
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { formatFecha, isoHoy, isoHace, agregarDatos, transformarEmae };
+  module.exports = { formatFecha, isoHoy, isoHace, agregarDatos, transformarEmae,
+                     pearson, crossCorrelation, normalizar, alinearSeries };
 }

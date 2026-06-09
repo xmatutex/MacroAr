@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laboratorio — MacroAr | Correlacioná indicadores de Argentina</title>
+  <meta name="description" content="Compará y correlacioná dos indicadores de la economía argentina: dólar, inflación, riesgo país, reservas, EMAE, Merval y más. Mirá cuál se mueve antes y cómo se relacionan.">
+  <link rel="canonical" href="https://macroar.com.ar/laboratorio">
+  <meta name="theme-color" content="#1c3c63">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="MacroAr">
+  <meta property="og:locale" content="es_AR">
+  <meta property="og:url" content="https://macroar.com.ar/laboratorio">
+  <meta property="og:title" content="Laboratorio — MacroAr">
+  <meta property="og:description" content="Correlacioná dos indicadores de la economía argentina y descubrí cómo se relacionan y cuál se mueve antes.">
+  <meta property="og:image" content="https://macroar.com.ar/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Laboratorio — MacroAr">
+  <meta name="twitter:description" content="Correlacioná indicadores de la economía argentina.">
+  <meta name="twitter:image" content="https://macroar.com.ar/og-image.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="page-laboratorio">
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo" aria-label="MacroAr — ir al inicio">Macro<span>Ar</span></a>
+      <div class="nav-links">
+        <a href="/">Inicio</a>
+        <a href="/datos">Datos</a>
+        <a href="/laboratorio" style="color: #fff;">Laboratorio</a>
+      </div>
+      <div class="nav-actions"></div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <p class="hero-eyebrow">Análisis avanzado</p>
+        <h1>Laboratorio de <em>Correlaciones</em></h1>
+        <p class="hero-sub">Elegí dos indicadores y descubrí cómo se relacionan y cuál se mueve antes.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Laboratorio -->
+  <section class="lab-section">
+    <div class="lab-controls">
+      <div class="lab-field">
+        <label for="serie-a">Serie A</label>
+        <select id="serie-a"></select>
+      </div>
+      <div class="lab-field">
+        <label for="serie-b">Serie B</label>
+        <select id="serie-b"></select>
+      </div>
+      <div class="lab-field">
+        <label for="lab-freq">Frecuencia</label>
+        <select id="lab-freq">
+          <option value="mensual">Mensual</option>
+          <option value="trimestral">Trimestral</option>
+          <option value="anual">Anual</option>
+        </select>
+      </div>
+      <div class="lab-field">
+        <label>Cómo comparar</label>
+        <div class="btn-group" id="lab-modo">
+          <button type="button" data-modo="indice" class="active">Índice 100</button>
+          <button type="button" data-modo="niveles">Niveles</button>
+          <button type="button" data-modo="variacion">Variación %</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="lab-insight" id="lab-insight" role="status" aria-live="polite">
+      Elegí dos series para empezar.
+    </div>
+
+    <div class="lab-chart-wrap">
+      <canvas id="lab-chart" role="img" aria-label="Gráfico comparativo de dos indicadores"></canvas>
+    </div>
+
+    <div class="lab-footer-row">
+      <p class="lab-freshness" id="lab-freshness"></p>
+      <button type="button" class="btn-export-mini" id="lab-share">🔗 Copiar enlace de este análisis</button>
+    </div>
+
+    <p class="lab-disclaimer">
+      Correlación no implica causalidad. El lead/lag indica qué serie se movió antes en el período analizado,
+      no que una cause a la otra. Con pocos datos en común, los resultados son orientativos.
+    </p>
+  </section>
+
+  <!-- Footer -->
+  <footer id="fuentes">
+    <div class="footer-inner">
+      <div class="footer-logo">Macro<span>Ar</span></div>
+      <p class="footer-desc">Visualización de datos macroeconómicos de Argentina.</p>
+      <div class="footer-links">
+        <a href="/laboratorio">Laboratorio</a>
+        <a href="/contacto">Contacto</a>
+        <a href="https://www.bcra.gob.ar" target="_blank">BCRA</a>
+        <a href="https://apis.datos.gob.ar/series" target="_blank">datos.gob.ar</a>
+        <a href="https://www.indec.gob.ar" target="_blank">INDEC</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/lib.js"></script>
+  <script src="/app.js"></script>
+  <script src="/laboratorio.js"></script>
+</body>
+</html>

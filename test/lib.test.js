@@ -2,7 +2,8 @@
 // Correr: node --test
 const { test } = require('node:test');
 const assert = require('node:assert');
-const { formatFecha, isoHace, agregarDatos, transformarEmae } = require('../lib.js');
+const { formatFecha, isoHace, agregarDatos, transformarEmae,
+        pearson, crossCorrelation, normalizar, alinearSeries } = require('../lib.js');
 
 // ─── formatFecha ──────────────────────────────────────────────────────────────
 
@@ -104,4 +105,76 @@ test('transformarEmae: serie vacía no rompe', () => {
 
 test('isoHace: devuelve formato YYYY-MM-DD', () => {
   assert.match(isoHace(30), /^\d{4}-\d{2}-\d{2}$/);
+});
+
+// ─── pearson ──────────────────────────────────────────────────────────────────
+
+test('pearson: correlación perfecta positiva = 1', () => {
+  assert.strictEqual(pearson([1, 2, 3], [2, 4, 6]), 1);
+});
+
+test('pearson: correlación perfecta negativa = -1', () => {
+  assert.strictEqual(pearson([1, 2, 3], [3, 2, 1]), -1);
+});
+
+test('pearson: serie constante (varianza 0) devuelve null', () => {
+  assert.strictEqual(pearson([1, 1, 1], [1, 2, 3]), null);
+});
+
+test('pearson: n < 2 devuelve null', () => {
+  assert.strictEqual(pearson([5], [5]), null);
+});
+
+// ─── normalizar ───────────────────────────────────────────────────────────────
+
+test('normalizar: niveles devuelve copia igual', () => {
+  assert.deepStrictEqual(normalizar([50, 100, 150], 'niveles'), [50, 100, 150]);
+});
+
+test('normalizar: indice base 100 en el primer punto', () => {
+  assert.deepStrictEqual(normalizar([50, 100, 150], 'indice'), [100, 200, 300]);
+});
+
+test('normalizar: variacion % pierde el primer punto (n-1)', () => {
+  assert.deepStrictEqual(normalizar([100, 110, 99], 'variacion'), [10, -10]);
+});
+
+test('normalizar: array vacío no rompe', () => {
+  assert.deepStrictEqual(normalizar([], 'indice'), []);
+});
+
+// ─── alinearSeries ────────────────────────────────────────────────────────────
+
+test('alinearSeries: intersecta por clave de fecha', () => {
+  const A = [{ fecha: '2024-01', valor: 1 }, { fecha: '2024-02', valor: 2 }, { fecha: '2024-03', valor: 3 }];
+  const B = [{ fecha: '2024-02', valor: 20 }, { fecha: '2024-03', valor: 30 }, { fecha: '2024-04', valor: 40 }];
+  const r = alinearSeries(A, B);
+  assert.deepStrictEqual(r.fechas, ['2024-02', '2024-03']);
+  assert.deepStrictEqual(r.a, [2, 3]);
+  assert.deepStrictEqual(r.b, [20, 30]);
+  assert.strictEqual(r.n, 2);
+});
+
+test('alinearSeries: sin períodos en común devuelve n=0', () => {
+  const A = [{ fecha: '2024-01', valor: 1 }];
+  const B = [{ fecha: '2025-01', valor: 9 }];
+  assert.strictEqual(alinearSeries(A, B).n, 0);
+});
+
+// ─── crossCorrelation ─────────────────────────────────────────────────────────
+
+test('crossCorrelation: detecta que A adelanta a B en 1 período (lag>0)', () => {
+  // Patrón distintivo (no lineal) para que el pico de correlación sea único.
+  // B es A desplazada: B[i] = A[i-1]  =>  A[i] correlaciona con B[i+1]  => lag = 1
+  const a = [2, 5, 1, 8, 3, 9, 4, 7, 6, 0];
+  const b = [99, 2, 5, 1, 8, 3, 9, 4, 7, 6];
+  const r = crossCorrelation(a, b, 6, 4);
+  assert.strictEqual(r.lag, 1);
+  assert.ok(Math.abs(r.r - 1) < 1e-9, `r debería ser ~1, fue ${r.r}`);
+});
+
+test('crossCorrelation: series sincronizadas dan lag 0', () => {
+  const a = [2, 5, 1, 8, 3, 9, 4, 7];
+  const b = a.map(v => v * 2);
+  assert.strictEqual(crossCorrelation(a, b, 4, 4).lag, 0);
 });
