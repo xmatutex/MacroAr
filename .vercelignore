@@ -3,6 +3,7 @@ Datos UTDT/
 subir_datos.py
 fetch_mercados.py
 fetch_utdt.py
+fetch_rem.py
 generar-paginas.js
 requirements.txt
 .gstack/

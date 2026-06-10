@@ -20,7 +20,13 @@ Genera `data/merval.json`. Se usa porque Yahoo Finance bloquea CORS desde el bro
 ```bash
 python fetch_utdt.py
 ```
-Scrapea la página de "Serie Histórica" de UTDT (ICC y EI), extrae el link de descarga `download.php?fname=...xls` (cambia cuando suben datos nuevos) y genera `data/icc.json` y `data/ei.json`. Requiere User-Agent de navegador (UTDT tiene anti-bot). Corre solo cada mes vía `.github/workflows/update-utdt.yml` (día 22). Reemplaza la carga manual de ICC/EI; los **REM** del BCRA siguen siendo manuales con `subir_datos.py`.
+Scrapea la página de "Serie Histórica" de UTDT (ICC y EI), extrae el link de descarga `download.php?fname=...xls` (cambia cuando suben datos nuevos) y genera `data/icc.json` y `data/ei.json`. Requiere User-Agent de navegador (UTDT tiene anti-bot). Corre solo cada mes vía `.github/workflows/update-utdt.yml` (día 22).
+
+**Traer los REM (BCRA) automáticamente desde la web:**
+```bash
+python fetch_rem.py
+```
+Scrapea la página del REM del BCRA, encuentra el Excel `tablas-...-MMM-AAAA.xlsx` (el mes cambia), lo baja y genera las 9 `data/rem-*.json`. Replica el parseo de `subir_datos.py` (hoja 0, skiprows=6, col fecha=1, corte en la primera fila sin fecha). Usa `certifi` para el SSL del BCRA. Corre solo cada mes vía `.github/workflows/update-rem.yml` (día 10). `subir_datos.py` queda solo como fallback manual.
 
 **Instalar dependencias Python:**
 ```bash

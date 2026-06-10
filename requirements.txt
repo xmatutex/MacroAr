@@ -4,3 +4,4 @@
 pandas
 openpyxl   # leer .xlsx
 xlrd       # leer .xls
+certifi    # CA bundle para el SSL del BCRA (fetch_rem.py)
