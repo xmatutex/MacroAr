@@ -39,7 +39,7 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0;
-  height: 82px;
+  height: 88px;
   display: flex;
   align-items: center;
   gap: 2.4rem;
@@ -48,14 +48,14 @@ body {
 .nav-logo {
   position: relative;
   font-family: 'Poppins', sans-serif;
-  font-size: 1.45rem;
+  font-size: 1.55rem;
   font-weight: 800;
   color: var(--teal-dark);
   letter-spacing: -0.5px;
   line-height: 1;
   flex-shrink: 0;
   text-decoration: none;
-  transform: translateY(-4px); /* deja lugar para la bajada de abajo */
+  transform: translateY(-5px); /* deja lugar para la bajada de abajo */
 }
 .nav-logo span { color: var(--ink); }
 .nav-logo::after {
@@ -80,7 +80,7 @@ body {
 .nav-links a {
   color: var(--ink);
   text-decoration: none;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 500;
   transition: color 0.15s;
 }
@@ -95,9 +95,9 @@ body {
 .nav-cta {
   background: var(--ink);
   color: #fff !important;
-  padding: 0.6rem 1.3rem;
+  padding: 0.62rem 1.4rem;
   border-radius: 6px;
-  font-size: 0.88rem;
+  font-size: 0.95rem;
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
@@ -177,31 +177,18 @@ body {
   padding: 4.5rem 1.5rem 4rem;
   color: var(--ink);
 }
-/* Forma celeste con textura de puntos (arriba a la derecha) */
-.hero::before {
-  content: "";
-  position: absolute;
-  right: -90px; top: -240px;
-  width: 330px; height: 920px;
+/* Formas diagonales (firma visual tipo consultora) — 4 capas como el prototipo */
+.hero-shapes { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.hs { position: absolute; border-radius: 70px; transform: rotate(24deg); }
+.hs-celeste {
+  right: -100px; top: -220px; width: 380px; height: 1100px;
   background: var(--teal);
-  background-image: radial-gradient(rgba(255,255,255,0.45) 1.5px, transparent 1.5px);
-  background-size: 15px 15px;
-  border-radius: 70px;
-  transform: rotate(24deg);
-  opacity: 0.9;
-  z-index: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.4) 1.6px, transparent 1.6px);
+  background-size: 16px 16px;
 }
-/* Acento navy diagonal detrás */
-.hero::after {
-  content: "";
-  position: absolute;
-  right: 215px; top: -120px;
-  width: 110px; height: 620px;
-  background: var(--ink);
-  border-radius: 60px;
-  transform: rotate(24deg);
-  z-index: 0;
-}
+.hs-navy { right: 270px; top: -40px; width: 150px; height: 900px; background: var(--ink); border-radius: 60px; }
+.hs-sol  { right: 410px; top: 240px; width: 90px;  height: 620px; background: var(--sol); }
+.hs-line { right: 235px; top: -80px; width: 14px;  height: 320px; background: #e8edf2; border-radius: 10px; }
 
 .hero-inner {
   position: relative;
@@ -364,7 +351,7 @@ body {
   cursor: pointer;
   color: var(--ink);
   font-family: 'Inter', sans-serif;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 500;
   transition: color 0.15s;
 }
@@ -913,7 +900,7 @@ footer {
   .footer-inner      { flex-direction: column; align-items: flex-start; }
   .btn-ghost         { display: none; }
   /* En mobile las formas diagonales taparían el título: las ocultamos */
-  .hero::before, .hero::after { display: none; }
+  .hero-shapes { display: none; }
   .hero-text h1 { font-size: 2rem; }
 }
 
