@@ -1080,8 +1080,8 @@ footer {
 .btn-hero-b:hover { color: var(--teal-dark); }
 
 /* Cinta de indicadores con divisores */
-.strip { background: #fff; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-.strip-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+.strip { background: #fff; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 0 2rem; }
+.strip-inner { max-width: 1200px; margin: 0 auto; }
 .strip .hero-stats { display: flex; gap: 0; }
 .strip .hero-stat {
   flex: 1;
@@ -1099,9 +1099,9 @@ footer {
 .strip .hero-stat-value { font-size: 2rem; }
 
 /* Banda oscura: Laboratorio */
-.band { background: var(--dark); color: #fff; padding: 5rem 0; }
+.band { background: var(--dark); color: #fff; padding: 5rem 2rem; }
 .band-inner {
-  max-width: 1200px; margin: 0 auto; padding: 0 2rem;
+  max-width: 1200px; margin: 0 auto;
   display: grid; grid-template-columns: 1.1fr 1fr; gap: 4rem; align-items: center;
 }
 .band .hero-eyebrow { color: var(--teal); }
@@ -1132,9 +1132,9 @@ footer {
 .sec-link:hover { text-decoration: underline; }
 
 /* Franja de fuentes oficiales */
-.fuentes-strip { background: #fff; border-top: 1px solid var(--border); padding: 2.6rem 0; }
+.fuentes-strip { background: #fff; border-top: 1px solid var(--border); padding: 2.6rem 2rem; }
 .fuentes-strip-in {
-  max-width: 1200px; margin: 0 auto; padding: 0 2rem;
+  max-width: 1200px; margin: 0 auto;
   display: flex; align-items: center; justify-content: space-between; gap: 2rem; flex-wrap: wrap;
 }
 .fuentes-strip .t { font-size: 0.72rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-weight: 600; }
