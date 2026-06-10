@@ -1070,3 +1070,90 @@ footer {
   .lab-chart-wrap { height: 320px; padding: 1rem; }
   .lab-scatter-wrap { height: 300px; }
 }
+
+/* ── Home estilo consultora: CTAs, cinta, banda, fuentes ──── */
+.hero-ctas { display: flex; gap: 1rem; margin-top: 2.2rem; flex-wrap: wrap; }
+.btn-hero-a {
+  background: var(--ink); color: #fff; text-decoration: none;
+  padding: 0.85rem 1.7rem; border-radius: 6px; font-weight: 600; font-size: 0.95rem;
+  transition: background 0.15s;
+}
+.btn-hero-a:hover { background: var(--navy); }
+.btn-hero-b {
+  color: var(--ink); text-decoration: none; padding: 0.85rem 1.1rem;
+  font-weight: 600; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 0.5rem;
+  transition: color 0.15s;
+}
+.btn-hero-b::after { content: "→"; }
+.btn-hero-b:hover { color: var(--teal-dark); }
+
+/* Cinta de indicadores con divisores */
+.strip { background: #fff; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.strip-inner { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
+.strip .hero-stats { display: flex; gap: 0; }
+.strip .hero-stat {
+  flex: 1;
+  background: transparent;
+  border: none; border-top: none;
+  border-right: 1px solid var(--border);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 1.9rem 1.7rem;
+  transform: none;
+}
+.strip .hero-stat:hover { box-shadow: none; transform: none; }
+.strip .hero-stat:first-child { padding-left: 0; }
+.strip .hero-stat:last-child { border-right: none; }
+.strip .hero-stat-value { font-size: 2rem; }
+
+/* Banda oscura: Laboratorio */
+.band { background: var(--dark); color: #fff; padding: 5rem 0; }
+.band-inner {
+  max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;
+  display: grid; grid-template-columns: 1.1fr 1fr; gap: 4rem; align-items: center;
+}
+.band .hero-eyebrow { color: var(--teal); }
+.band .hero-eyebrow::before { background: var(--teal); }
+.band h2 {
+  font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 2.4rem;
+  line-height: 1.2; letter-spacing: -0.5px; color: #fff;
+}
+.band p { margin-top: 1.2rem; color: #b9c6d4; line-height: 1.7; font-size: 1rem; max-width: 480px; }
+.band-btn {
+  display: inline-block; margin-top: 1.8rem; color: #fff;
+  border: 1px solid rgba(255,255,255,0.35); text-decoration: none;
+  padding: 0.8rem 1.6rem; border-radius: 6px; font-weight: 600; font-size: 0.92rem;
+  transition: all 0.15s;
+}
+.band-btn:hover { border-color: var(--teal); color: var(--teal); }
+.band-card {
+  background: #1f3954; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px;
+  padding: 1.8rem; box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+}
+.band-card .t { font-size: 0.8rem; color: #9fb6cc; margin-bottom: 1rem; }
+.band-card svg { width: 100%; height: 175px; }
+.band-card .r { margin-top: 1rem; font-size: 0.86rem; color: #dbe7f2; border-left: 3px solid var(--teal); padding-left: 0.8rem; line-height: 1.6; }
+
+/* Encabezado de sección con link a la derecha */
+.section-header-row { display: flex; justify-content: space-between; align-items: flex-end; }
+.sec-link { color: var(--teal-dark); text-decoration: none; font-weight: 600; font-size: 0.92rem; white-space: nowrap; }
+.sec-link:hover { text-decoration: underline; }
+
+/* Franja de fuentes oficiales */
+.fuentes-strip { background: #fff; border-top: 1px solid var(--border); padding: 2.6rem 0; }
+.fuentes-strip-in {
+  max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;
+  display: flex; align-items: center; justify-content: space-between; gap: 2rem; flex-wrap: wrap;
+}
+.fuentes-strip .t { font-size: 0.72rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.flogos { display: flex; gap: 2.6rem; align-items: center; flex-wrap: wrap; }
+.flogos span { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 1rem; color: #9aa9b8; }
+
+@media (max-width: 760px) {
+  .band-inner { grid-template-columns: 1fr; gap: 2rem; }
+}
+@media (max-width: 640px) {
+  .strip .hero-stats { flex-wrap: wrap; }
+  .strip .hero-stat { flex: 1 1 45%; border-right: none; border-bottom: 1px solid var(--border); padding: 1.2rem 1rem; }
+  .section-header-row { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+}

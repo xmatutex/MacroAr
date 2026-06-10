@@ -53,7 +53,7 @@
         <a href="datos.html">Datos</a>
         <a href="/laboratorio">Laboratorio</a>
       </div>
-      <div class="nav-actions"></div>
+      <div class="nav-actions"><a class="nav-cta" href="/datos">Explorar datos</a></div>
     </div>
   </nav>
 
@@ -64,21 +64,62 @@
         <p class="hero-eyebrow">Análisis macroeconómico de Argentina</p>
         <h1>Los datos de la economía,<br>con <em>rigor</em> y en tiempo real</h1>
         <p class="hero-sub">Seguimos los principales indicadores de la macro argentina —dólar, inflación, riesgo país, actividad— directo de las fuentes oficiales, con herramientas de análisis abiertas y gratuitas.</p>
+        <div class="hero-ctas">
+          <a class="btn-hero-a" href="#indicadores">Ver indicadores</a>
+          <a class="btn-hero-b" href="/laboratorio">Probar el Laboratorio</a>
+        </div>
       </div>
-      <div class="hero-stats" id="hero-stats"></div>
     </div>
   </section>
 
-  <!-- Charts -->
+  <!-- Cinta de indicadores -->
+  <div class="strip">
+    <div class="strip-inner">
+      <div class="hero-stats" id="hero-stats"></div>
+    </div>
+  </div>
+
+  <!-- Banda: Laboratorio -->
+  <section class="band">
+    <div class="band-inner">
+      <div>
+        <p class="hero-eyebrow">Análisis avanzado</p>
+        <h2>Laboratorio de correlaciones y regresiones</h2>
+        <p>Cruzá dos indicadores y obtené el análisis completo: correlación, lead/lag y regresión lineal (MCO) con ANOVA y significatividad estadística. Compartí cada hallazgo con un link.</p>
+        <a class="band-btn" href="/laboratorio">Conocé el Laboratorio →</a>
+      </div>
+      <div class="band-card">
+        <div class="t">Dólar Blue vs. Inflación Mensual · variación % · ejemplo</div>
+        <svg viewBox="0 0 400 180" preserveAspectRatio="none" role="img" aria-label="Ejemplo de dos series superpuestas">
+          <polyline points="0,150 40,140 80,148 120,118 160,128 200,88 240,98 280,58 320,74 360,40 400,52" fill="none" stroke="#74ACDF" stroke-width="3"/>
+          <polyline points="0,160 40,154 80,150 120,140 160,134 200,118 240,116 280,94 320,86 360,68 400,64" fill="none" stroke="#F6B40E" stroke-width="3"/>
+        </svg>
+        <div class="r">Detectá cuál se movió antes y medí la fuerza de la relación, con la estadística a la vista.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Indicadores destacados -->
   <section class="charts-section" id="indicadores">
     <div class="charts-inner">
-      <div class="section-header">
-        <h2>Indicadores</h2>
-        <p>Últimos 90 días · BCRA / INDEC</p>
+      <div class="section-header section-header-row">
+        <div>
+          <h2>Indicadores destacados</h2>
+          <p>Series clave de la macro argentina · BCRA / INDEC</p>
+        </div>
+        <a class="sec-link" href="/datos">Ver catálogo completo →</a>
       </div>
       <div class="grid" id="grid"></div>
     </div>
   </section>
+
+  <!-- Franja de fuentes -->
+  <div class="fuentes-strip">
+    <div class="fuentes-strip-in">
+      <div class="t">Datos directos de fuentes oficiales</div>
+      <div class="flogos"><span>BCRA</span><span>INDEC</span><span>UTDT</span><span>BYMA</span><span>datos.gob.ar</span></div>
+    </div>
+  </div>
 
   <!-- Footer -->
   <footer id="fuentes">

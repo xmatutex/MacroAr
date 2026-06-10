@@ -78,7 +78,7 @@ function plantilla(serie) {
         <a href="/datos">Datos</a>
         <a href="/laboratorio">Laboratorio</a>
       </div>
-      <div class="nav-actions"></div>
+      <div class="nav-actions"><a class="nav-cta" href="/datos">Explorar datos</a></div>
     </div>
   </nav>
 
