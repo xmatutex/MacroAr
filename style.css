@@ -282,8 +282,8 @@ body {
 }
 
 .hero-stat-delta { font-size: 0.78rem; font-weight: 600; margin-top: 0.35rem; min-height: 1em; }
-.hero-stat-delta.up      { color: #0a8a5f; }
-.hero-stat-delta.down    { color: #c2403c; }
+.hero-stat-delta.buena   { color: #0a8a5f; }  /* verde: mejora económica */
+.hero-stat-delta.mala    { color: #c2403c; }  /* rojo: empeora */
 .hero-stat-delta.neutral { color: var(--muted); }
 
 /* Desplegable de valores (página Datos): cajita vertical con flecha */

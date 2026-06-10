@@ -518,6 +518,20 @@ function inicializarHeroStats(lista = SERIES) {
   }
 }
 
+// Sesgo económico: el color del delta refleja si la variación es buena (verde)
+// o mala (roja) para la economía, NO el signo matemático. La flecha ▲/▼ igual
+// muestra la dirección real del dato.
+//  - SESGO_BAJA: bajar es bueno (dólar, inflación, riesgo país, desempleo...).
+//  - SESGO_NEUTRAL: sin lectura buena/mala (commodities, tasas, base monetaria).
+//  - El resto: subir es bueno (reservas, actividad, Merval, exportaciones...).
+const SESGO_BAJA = new Set([
+  'tc-oficial', 'tc-blue', 'tc-mayorista', 'inflacion', 'inflacion-anual',
+  'ei-ditella', 'rem-ipc', 'rem-ipc-nucleo', 'rem-tcn', 'rem-desocupacion', 'riesgo-pais',
+]);
+const SESGO_NEUTRAL = new Set([
+  'oro-usd', 'base-monetaria', 'tasa-badlar', 'tasa-plazo-fijo', 'rem-badlar', 'rem-impo',
+]);
+
 function actualizarHeroStat(serie, datos) {
   const el = document.getElementById(`hval-${serie.id}`);
   if (!el) return;
@@ -525,7 +539,6 @@ function actualizarHeroStat(serie, datos) {
   el.textContent = ultimo.valor.toLocaleString('es-AR', { maximumFractionDigits: 2 });
   el.classList.remove('placeholder');
 
-  // Variación vs el dato anterior: verde si sube, rojo si baja.
   const d = document.getElementById(`hdelta-${serie.id}`);
   if (!d) return;
   const prev = datos.length >= 2 ? datos[datos.length - 2].valor : null;
@@ -540,14 +553,18 @@ function actualizarHeroStat(serie, datos) {
   const delta = esTasa ? (ultimo.valor - prev) : (ultimo.valor / prev - 1) * 100;
   const suf = esTasa ? ' pp' : '%';
   const txt = Math.abs(delta).toLocaleString('es-AR', { maximumFractionDigits: 2 });
-  if (Math.abs(delta) < 0.005) {
-    d.textContent = `= 0${suf}`;
-    d.className = 'hero-stat-delta neutral';
+  const sube = delta > 0;
+
+  // Color por lógica económica (no por signo).
+  let cls;
+  if (Math.abs(delta) < 0.005 || SESGO_NEUTRAL.has(serie.id)) {
+    cls = 'neutral';
   } else {
-    const sube = delta > 0;
-    d.textContent = `${sube ? '▲' : '▼'} ${txt}${suf}`;
-    d.className = 'hero-stat-delta ' + (sube ? 'up' : 'down');
+    const bueno = SESGO_BAJA.has(serie.id) ? !sube : sube;
+    cls = bueno ? 'buena' : 'mala';
   }
+  d.textContent = `${Math.abs(delta) < 0.005 ? '=' : (sube ? '▲' : '▼')} ${txt}${suf}`;
+  d.className = 'hero-stat-delta ' + cls;
 }
 
 
