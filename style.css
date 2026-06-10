@@ -73,8 +73,8 @@ body {
 
 .nav-links {
   display: flex;
-  gap: 2rem;
-  flex: 1;
+  gap: 2.4rem;
+  margin-left: auto;   /* agrupa los links a la derecha, junto al botón (como el prototipo) */
   align-items: center;
 }
 .nav-links a {

@@ -74,11 +74,10 @@ function plantilla(serie) {
     <div class="nav-inner">
       <a href="/" class="nav-logo" aria-label="MacroAr — ir al inicio">Macro<span>Ar</span></a>
       <div class="nav-links">
-        <a href="/">Inicio</a>
         <a href="/datos">Datos</a>
-        <a href="/laboratorio">Laboratorio</a>
+        <a href="/contacto">Contacto</a>
       </div>
-      <div class="nav-actions"><a class="nav-cta" href="/datos">Explorar datos</a></div>
+      <div class="nav-actions"><a class="nav-cta" href="/laboratorio">Laboratorio</a></div>
     </div>
   </nav>
 
