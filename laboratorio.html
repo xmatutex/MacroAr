@@ -95,9 +95,22 @@
       <button type="button" class="btn-export-mini" id="lab-share">🔗 Copiar enlace de este análisis</button>
     </div>
 
+    <div class="lab-reg-head">
+      <h2>Regresión lineal (MCO)</h2>
+      <div class="btn-group" id="lab-reg-dir">
+        <button type="button" data-dir="ba" class="active">B sobre A</button>
+        <button type="button" data-dir="ab">A sobre B</button>
+      </div>
+    </div>
+    <div id="lab-reg-out" class="lab-reg-out"></div>
+    <div class="lab-chart-wrap lab-scatter-wrap" id="lab-scatter-wrap">
+      <canvas id="lab-scatter" role="img" aria-label="Gráfico de dispersión con recta de regresión"></canvas>
+    </div>
+
     <p class="lab-disclaimer">
       Correlación no implica causalidad. El lead/lag indica qué serie se movió antes en el período analizado,
       no que una cause a la otra. Con pocos datos en común, los resultados son orientativos.
+      La regresión MCO mostrada es bivariada y descriptiva: omite variables relevantes y no establece causalidad.
     </p>
   </section>
 

@@ -21,7 +21,15 @@
 
   let modo = 'indice';
   let chart = null;
+  let dirReg = 'ba';
+  let scatter = null;
+  let ultimo = null;
   const cache = {}; // datos crudos por serie.id (evita re-fetch)
+
+  const elRegOut = document.getElementById('lab-reg-out');
+  const grupoDir = document.getElementById('lab-reg-dir');
+  const wrapScatter = document.getElementById('lab-scatter-wrap');
+  const canvasScatter = document.getElementById('lab-scatter');
 
   const PERIODO_LABEL = { mensual: 'meses', trimestral: 'trimestres', anual: 'años' };
   const MIN_N = { mensual: 12, trimestral: 6, anual: 4 };
@@ -42,15 +50,21 @@
     if (p.get('b') && UNIVERSO.some(s => s.id === p.get('b'))) selB.value = p.get('b');
     if (['mensual', 'trimestral', 'anual'].includes(p.get('f'))) selFreq.value = p.get('f');
     if (['indice', 'niveles', 'variacion'].includes(p.get('m'))) modo = p.get('m');
+    if (['ba', 'ab'].includes(p.get('d'))) dirReg = p.get('d');
     aplicarModoUI();
+    aplicarDirUI();
   }
   function escribirHash() {
-    const p = new URLSearchParams({ a: selA.value, b: selB.value, f: selFreq.value, m: modo });
+    const p = new URLSearchParams({ a: selA.value, b: selB.value, f: selFreq.value, m: modo, d: dirReg });
     history.replaceState(null, '', '#' + p.toString());
   }
   function aplicarModoUI() {
     grupoModo.querySelectorAll('button').forEach(b =>
       b.classList.toggle('active', b.dataset.modo === modo));
+  }
+  function aplicarDirUI() {
+    grupoDir.querySelectorAll('button').forEach(b =>
+      b.classList.toggle('active', b.dataset.dir === dirReg));
   }
 
   // ── Fetch (cacheado) ─────────────────────────────────────────────────────────
@@ -100,6 +114,149 @@
     return txt;
   }
 
+  // ── Regresión lineal (MCO) ────────────────────────────────────────────────────
+  function fmt(v) {
+    return !isFinite(v) ? '∞' : String(Number(v.toPrecision(4)));
+  }
+  function pTxt(p) {
+    if (p == null || !isFinite(p)) return '—';
+    if (p < 1e-4) return '<0.0001';
+    return p.toFixed(4);
+  }
+  function stars(p) {
+    if (p == null || !isFinite(p)) return '';
+    return p < 0.01 ? '***' : p < 0.05 ? '**' : p < 0.1 ? '*' : '';
+  }
+  const MODO_LABEL = { indice: 'índice base 100', niveles: 'niveles', variacion: 'variación % período a período' };
+
+  function limpiarRegresion() {
+    if (elRegOut) elRegOut.innerHTML = '';
+    if (scatter) { scatter.destroy(); scatter = null; }
+    if (wrapScatter) wrapScatter.style.display = 'none';
+    ultimo = null;
+  }
+
+  function renderRegresion() {
+    if (!ultimo) return;
+    const { sA, sB, normA, normB, freq } = ultimo;
+    const yEsB = dirReg === 'ba';
+    const sX = yEsB ? sA : sB;
+    const sY = yEsB ? sB : sA;
+    const x = yEsB ? normA : normB;
+    const yv = yEsB ? normB : normA;
+
+    const reg = regresionLineal(x, yv);
+    if (!reg) {
+      elRegOut.innerHTML = '<p class="lab-reg-warning">No se puede estimar la regresión con estos datos (hacen falta al menos 3 puntos y variación en X).</p>';
+      if (scatter) { scatter.destroy(); scatter = null; }
+      wrapScatter.style.display = 'none';
+      return;
+    }
+
+    const signo1 = reg.b1 >= 0 ? '+' : '−';
+    let html = '';
+
+    if (modo !== 'variacion') {
+      html += `<p class="lab-reg-warning">⚠️ Estás corriendo la regresión sobre ${modo === 'indice' ? 'índice base 100' : 'niveles'}: con series con tendencia el ajuste puede ser espurio (R² alto sin relación real). Para una lectura más robusta usá <strong>Variación %</strong>.</p>`;
+    }
+
+    html += `<p class="lab-reg-eq">${sY.titulo} = ${fmt(reg.b0)} ${signo1} ${fmt(Math.abs(reg.b1))} × ${sX.titulo}</p>`;
+    html += `<p class="lab-reg-stats" style="margin-top:-.5rem">Datos: ${MODO_LABEL[modo]}.</p>`;
+
+    // Tabla de coeficientes.
+    html += '<table class="lab-table"><thead><tr>' +
+      '<th>Variable</th><th class="num">Coeficiente</th><th class="num">Error est.</th>' +
+      '<th class="num">t</th><th class="num">p-valor</th><th></th></tr></thead><tbody>';
+    html += `<tr><td>Constante (β₀)</td><td class="num">${fmt(reg.b0)}</td><td class="num">${fmt(reg.seB0)}</td>` +
+      `<td class="num">${fmt(reg.tB0)}</td><td class="num">${pTxt(reg.pB0)}</td><td class="lab-sig">${stars(reg.pB0)}</td></tr>`;
+    html += `<tr><td>${sX.titulo} (β₁)</td><td class="num">${fmt(reg.b1)}</td><td class="num">${fmt(reg.seB1)}</td>` +
+      `<td class="num">${fmt(reg.tB1)}</td><td class="num">${pTxt(reg.pB1)}</td><td class="lab-sig">${stars(reg.pB1)}</td></tr>`;
+    html += '</tbody></table>';
+
+    // Tabla ANOVA.
+    html += '<table class="lab-table"><thead><tr>' +
+      '<th>Fuente</th><th class="num">SC</th><th class="num">gl</th><th class="num">CM</th>' +
+      '<th class="num">F</th><th class="num">p</th></tr></thead><tbody>';
+    html += `<tr><td>Regresión</td><td class="num">${fmt(reg.ssr)}</td><td class="num">1</td><td class="num">${fmt(reg.ssr)}</td>` +
+      `<td class="num">${fmt(reg.F)}</td><td class="num">${pTxt(reg.pF)}</td></tr>`;
+    html += `<tr><td>Residuos</td><td class="num">${fmt(reg.sse)}</td><td class="num">${reg.df}</td><td class="num">${fmt(reg.sigma * reg.sigma)}</td>` +
+      '<td class="num">—</td><td class="num">—</td></tr>';
+    html += `<tr><td>Total</td><td class="num">${fmt(reg.sst)}</td><td class="num">${reg.n - 1}</td>` +
+      '<td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>';
+    html += '</tbody></table>';
+
+    // Línea de stats.
+    let dwTxt;
+    if (reg.dw == null) dwTxt = '—';
+    else {
+      let lectura = ' (sin autocorrelación marcada)';
+      if (reg.dw < 1.5) lectura = ' (posible autocorrelación positiva)';
+      else if (reg.dw > 2.5) lectura = ' (posible autocorrelación negativa)';
+      dwTxt = fmt(reg.dw) + lectura;
+    }
+    html += `<p class="lab-reg-stats">R² = ${reg.r2 == null ? '—' : fmt(reg.r2)} · ` +
+      `R² ajustado = ${reg.r2adj == null ? '—' : fmt(reg.r2adj)} · ` +
+      `σ̂ = ${fmt(reg.sigma)} · n = ${reg.n} · Durbin-Watson = ${dwTxt}</p>`;
+
+    // Interpretación.
+    let interp = `${sX.titulo} explica el ${(reg.r2 * 100).toFixed(1)}% de la variación de ${sY.titulo} en la muestra (n=${reg.n}). `;
+    if (reg.pB1 < 0.01) interp += `La relación es estadísticamente significativa al 1% (p ${pTxt(reg.pB1)}).`;
+    else if (reg.pB1 < 0.05) interp += `La relación es estadísticamente significativa al 5% (p ${pTxt(reg.pB1)}).`;
+    else if (reg.pB1 < 0.1) interp += `La relación es estadísticamente significativa al 10% (p ${pTxt(reg.pB1)}).`;
+    else interp += `La relación NO es estadísticamente significativa (p = ${pTxt(reg.pB1)}): con estos datos no se puede afirmar una relación lineal entre ambas.`;
+    if (reg.n < MIN_N[freq]) {
+      interp += ` Ojo: la muestra es chica (n=${reg.n}), así que tomá estos resultados como orientativos.`;
+    }
+    html += `<p class="lab-reg-interp">${interp}</p>`;
+
+    html += '<p class="lab-sig-legend">*** p&lt;0.01 · ** p&lt;0.05 · * p&lt;0.1</p>';
+
+    elRegOut.innerHTML = html;
+
+    // Scatter con recta MCO.
+    wrapScatter.style.display = '';
+    if (scatter) scatter.destroy();
+    const puntos = [];
+    for (let i = 0; i < Math.min(x.length, yv.length); i++) puntos.push({ x: x[i], y: yv[i] });
+    let xmin = Infinity, xmax = -Infinity;
+    for (let i = 0; i < puntos.length; i++) {
+      if (puntos[i].x < xmin) xmin = puntos[i].x;
+      if (puntos[i].x > xmax) xmax = puntos[i].x;
+    }
+    scatter = new Chart(canvasScatter.getContext('2d'), {
+      data: {
+        datasets: [
+          {
+            type: 'scatter',
+            label: 'Observaciones',
+            data: puntos,
+            backgroundColor: sY.color + '99',
+            pointRadius: 3,
+          },
+          {
+            type: 'line',
+            label: 'Recta MCO',
+            data: [
+              { x: xmin, y: reg.b0 + reg.b1 * xmin },
+              { x: xmax, y: reg.b0 + reg.b1 * xmax },
+            ],
+            borderColor: '#1c3c63',
+            borderWidth: 2,
+            pointRadius: 0,
+          },
+        ],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: { title: { display: true, text: sX.titulo } },
+          y: { title: { display: true, text: sY.titulo } },
+        },
+        plugins: { legend: { position: 'top' } },
+      },
+    });
+  }
+
   // ── Render ───────────────────────────────────────────────────────────────────
   function dibujar(fechas, sA, datosA, sB, datosB) {
     if (chart) chart.destroy();
@@ -132,6 +289,7 @@
       elInsight.textContent = 'Elegí dos series distintas para comparar.';
       elFresh.textContent = '';
       if (chart) { chart.destroy(); chart = null; }
+      limpiarRegresion();
       return;
     }
 
@@ -150,6 +308,7 @@
       if (al.n === 0) {
         elInsight.textContent = 'No hay períodos en común entre estas dos series.';
         if (chart) { chart.destroy(); chart = null; }
+        limpiarRegresion();
         return;
       }
 
@@ -169,6 +328,9 @@
       } else {
         elInsight.innerHTML = generarInsight(sA, sB, r, lag, normA.length, freq, maxLag);
       }
+
+      ultimo = { sA, sB, normA, normB, freq };
+      renderRegresion();
     } catch (err) {
       if (ticket !== pidiendo) return;
       elInsight.textContent = 'No se pudieron cargar los datos. Probá de nuevo en un momento.';
@@ -183,6 +345,14 @@
     modo = b.dataset.modo;
     aplicarModoUI();
     actualizar();
+  });
+  grupoDir.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-dir]');
+    if (!b) return;
+    dirReg = b.dataset.dir;
+    aplicarDirUI();
+    escribirHash();
+    renderRegresion();
   });
   btnShare.addEventListener('click', async () => {
     try {

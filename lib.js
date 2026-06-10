@@ -180,8 +180,151 @@ function alinearSeries(serieA, serieB) {
   return { fechas, a, b, n: fechas.length };
 }
 
+// ─── Econometría ──────────────────────────────────────────────────────────────
+
+// logGamma(x) — aproximación de Lanczos (g=7, 9 términos), con reflexión para x<0.5.
+function logGamma(x) {
+  const g = 7;
+  const c = [
+    0.99999999999980993,
+    676.5203681218851,
+    -1259.1392167224028,
+    771.32342877765313,
+    -176.61502916214059,
+    12.507343278686905,
+    -0.13857109526572012,
+    9.9843695780195716e-6,
+    1.5056327351493116e-7,
+  ];
+  if (x < 0.5) {
+    // Reflexión: Γ(x)Γ(1−x) = π / sin(πx)
+    return Math.log(Math.PI / Math.sin(Math.PI * x)) - logGamma(1 - x);
+  }
+  x -= 1;
+  let a = c[0];
+  const t = x + g + 0.5;
+  for (let i = 1; i < g + 2; i++) a += c[i] / (x + i);
+  return 0.5 * Math.log(2 * Math.PI) + (x + 0.5) * Math.log(t) - t + Math.log(a);
+}
+
+// Beta incompleta regularizada I_x(a,b) — método Numerical Recipes.
+function betaInc(x, a, b) {
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+
+  // Fracción continua (Lentz modificado).
+  function betacf(x, a, b) {
+    const MAXIT = 200, EPS = 3e-14, FPMIN = 1e-300;
+    const qab = a + b, qap = a + 1, qam = a - 1;
+    let c = 1;
+    let d = 1 - qab * x / qap;
+    if (Math.abs(d) < FPMIN) d = FPMIN;
+    d = 1 / d;
+    let h = d;
+    for (let m = 1; m <= MAXIT; m++) {
+      const m2 = 2 * m;
+      let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+      d = 1 + aa * d;
+      if (Math.abs(d) < FPMIN) d = FPMIN;
+      c = 1 + aa / c;
+      if (Math.abs(c) < FPMIN) c = FPMIN;
+      d = 1 / d;
+      h *= d * c;
+      aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+      d = 1 + aa * d;
+      if (Math.abs(d) < FPMIN) d = FPMIN;
+      c = 1 + aa / c;
+      if (Math.abs(c) < FPMIN) c = FPMIN;
+      d = 1 / d;
+      const del = d * c;
+      h *= del;
+      if (Math.abs(del - 1) < EPS) break;
+    }
+    return h;
+  }
+
+  const bt = Math.exp(
+    logGamma(a + b) - logGamma(a) - logGamma(b) +
+    a * Math.log(x) + b * Math.log(1 - x)
+  );
+  if (x < (a + 1) / (a + b + 2)) {
+    return bt * betacf(x, a, b) / a;
+  }
+  return 1 - bt * betacf(1 - x, b, a) / b;
+}
+
+// p-value BILATERAL de la t de Student.
+function pValorT(t, df) {
+  if (!isFinite(t)) return 0;
+  return betaInc(df / (df + t * t), df / 2, 0.5);
+}
+
+// p-value de cola superior de la F.
+function pValorF(F, df1, df2) {
+  if (F <= 0) return 1;
+  if (!isFinite(F)) return 0;
+  return betaInc(df2 / (df2 + df1 * F), df2 / 2, df1 / 2);
+}
+
+// Regresión lineal MCO simple Y = β₀ + β₁X.
+// Devuelve null si n<3 o si X es constante (sxx===0).
+function regresionLineal(x, y) {
+  const n = Math.min(x.length, y.length);
+  if (n < 3) return null;
+
+  let sx = 0, sy = 0;
+  for (let i = 0; i < n; i++) { sx += x[i]; sy += y[i]; }
+  const mx = sx / n, my = sy / n;
+
+  let sxx = 0, syy = 0, sxy = 0;
+  for (let i = 0; i < n; i++) {
+    const dx = x[i] - mx, dy = y[i] - my;
+    sxx += dx * dx; syy += dy * dy; sxy += dx * dy;
+  }
+  if (sxx === 0) return null; // X constante
+
+  const b1 = sxy / sxx;
+  const b0 = my - b1 * mx;
+
+  // Residuos explícitos: SSE y numerador de Durbin-Watson.
+  let sse = 0, dwNum = 0, ePrev = 0;
+  for (let i = 0; i < n; i++) {
+    const e = y[i] - (b0 + b1 * x[i]);
+    sse += e * e;
+    if (i > 0) { const de = e - ePrev; dwNum += de * de; }
+    ePrev = e;
+  }
+
+  const sst = syy;
+  const ssr = Math.max(0, sst - sse);
+  const df = n - 2;
+  const mse = sse / df;
+  const sigma = Math.sqrt(mse);
+  const seB1 = Math.sqrt(mse / sxx);
+  const seB0 = Math.sqrt(mse * (1 / n + mx * mx / sxx));
+
+  const tDe = (coef, se) => {
+    if (se === 0) return coef === 0 ? 0 : (coef > 0 ? Infinity : -Infinity);
+    return coef / se;
+  };
+  const tB0 = tDe(b0, seB0);
+  const tB1 = tDe(b1, seB1);
+  const pB0 = pValorT(tB0, df);
+  const pB1 = pValorT(tB1, df);
+
+  const r2 = sst > 0 ? ssr / sst : null;
+  const r2adj = r2 == null ? null : 1 - (1 - r2) * (n - 1) / df;
+  const F = mse > 0 ? ssr / mse : Infinity;
+  const pF = pValorF(F, 1, df);
+  const dw = sse > 0 ? dwNum / sse : null;
+
+  return { n, df, b0, b1, seB0, seB1, tB0, tB1, pB0, pB1,
+           r2, r2adj, F, pF, sigma, sst, ssr, sse, dw };
+}
+
 // Doble export: en Node se importan; en el browser quedan como globales.
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { formatFecha, isoHoy, isoHace, agregarDatos, transformarEmae,
-                     pearson, crossCorrelation, normalizar, alinearSeries };
+                     pearson, crossCorrelation, normalizar, alinearSeries,
+                     pValorT, pValorF, regresionLineal };
 }

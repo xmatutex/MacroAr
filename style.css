@@ -922,6 +922,74 @@ footer {
 .lab-freshness { font-size: 0.8rem; color: var(--muted); margin: 0; }
 .lab-disclaimer { font-size: 0.78rem; color: #94a3b8; line-height: 1.5; border-top: 1px solid var(--border); padding-top: 1rem; }
 
+/* ─── Regresión lineal (MCO) ─── */
+.lab-reg-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 2rem 0 1rem;
+}
+.lab-reg-head h2 {
+  font-family: 'Poppins', sans-serif;
+  color: var(--navy);
+  font-size: 1.25rem;
+  margin: 0;
+}
+.lab-reg-out {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+}
+.lab-reg-warning {
+  background: #fff7ed;
+  border-left: 4px solid #f59e0b;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  margin-bottom: 1rem;
+}
+.lab-reg-eq {
+  font-weight: 600;
+  color: var(--navy);
+  font-size: 1.05rem;
+  margin-bottom: 1rem;
+}
+.lab-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+.lab-table th {
+  background: var(--bg);
+  color: var(--navy);
+  text-align: left;
+  padding: 0.5rem 0.7rem;
+  border-bottom: 2px solid var(--border);
+}
+.lab-table td {
+  padding: 0.45rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+}
+.lab-table td.num, .lab-table th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.lab-sig { color: #047857; font-weight: 700; }
+.lab-reg-stats { font-size: 0.88rem; color: var(--text); margin-bottom: 0.75rem; }
+.lab-reg-interp {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+.lab-sig-legend { font-size: 0.75rem; color: var(--muted); margin-top: 0.5rem; }
+.lab-scatter-wrap { height: 400px; }
+
 @media (max-width: 640px) {
   .lab-chart-wrap { height: 320px; padding: 1rem; }
+  .lab-scatter-wrap { height: 300px; }
 }

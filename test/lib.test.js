@@ -3,7 +3,8 @@
 const { test } = require('node:test');
 const assert = require('node:assert');
 const { formatFecha, isoHace, agregarDatos, transformarEmae,
-        pearson, crossCorrelation, normalizar, alinearSeries } = require('../lib.js');
+        pearson, crossCorrelation, normalizar, alinearSeries,
+        pValorT, pValorF, regresionLineal } = require('../lib.js');
 
 // ─── formatFecha ──────────────────────────────────────────────────────────────
 
@@ -177,4 +178,52 @@ test('crossCorrelation: series sincronizadas dan lag 0', () => {
   const a = [2, 5, 1, 8, 3, 9, 4, 7];
   const b = a.map(v => v * 2);
   assert.strictEqual(crossCorrelation(a, b, 4, 4).lag, 0);
+});
+
+// ─── regresionLineal ──────────────────────────────────────────────────────────
+
+test('regresionLineal: recta perfecta y=1+2x recupera coeficientes y R²=1', () => {
+  const x = [1, 2, 3, 4, 5, 6, 7, 8];
+  const y = x.map(v => 1 + 2 * v);
+  const reg = regresionLineal(x, y);
+  assert.ok(Math.abs(reg.b0 - 1) < 1e-9, `b0=${reg.b0}`);
+  assert.ok(Math.abs(reg.b1 - 2) < 1e-9, `b1=${reg.b1}`);
+  assert.ok(Math.abs(reg.r2 - 1) < 1e-12, `r2=${reg.r2}`);
+  assert.ok(reg.pB1 < 1e-9, `pB1=${reg.pB1}`);
+});
+
+test('regresionLineal: identidades algebraicas con datos ruidosos', () => {
+  const x = [2, 5, 1, 8, 3, 9, 4, 7, 6, 10];
+  const y = [3, 7, 2, 9, 5, 11, 4, 8, 8, 12];
+  const reg = regresionLineal(x, y);
+  assert.ok(Math.abs(reg.F - reg.tB1 * reg.tB1) < 1e-8, `F=${reg.F} tB1²=${reg.tB1 ** 2}`);
+  const r = pearson(x, y);
+  assert.ok(Math.abs(reg.r2 - r * r) < 1e-10, `r2=${reg.r2} r²=${r * r}`);
+  assert.ok(Math.abs(reg.sst - (reg.ssr + reg.sse)) < 1e-8, `sst=${reg.sst} ssr+sse=${reg.ssr + reg.sse}`);
+});
+
+test('regresionLineal: X constante devuelve null', () => {
+  assert.strictEqual(regresionLineal([5, 5, 5, 5], [1, 2, 3, 4]), null);
+});
+
+test('regresionLineal: n<3 devuelve null', () => {
+  assert.strictEqual(regresionLineal([1, 2], [3, 4]), null);
+});
+
+// ─── pValorT / pValorF ──────────────────────────────────────────────────────────
+
+test('pValorT: df=1 (Cauchy) en t=1 -> p bilateral 0.5', () => {
+  assert.ok(Math.abs(pValorT(1, 1) - 0.5) < 1e-9, `p=${pValorT(1, 1)}`);
+});
+
+test('pValorT: df=2 forma cerrada en t=√2', () => {
+  const esperado = (2 - Math.SQRT2) / 2;
+  assert.ok(Math.abs(pValorT(Math.SQRT2, 2) - esperado) < 1e-9, `p=${pValorT(Math.SQRT2, 2)}`);
+});
+
+test('pValorF: identidad F(t²,1,df) = t bilateral', () => {
+  for (const [t, df] of [[1.5, 8], [2.3, 20]]) {
+    const dif = Math.abs(pValorF(t * t, 1, df) - pValorT(t, df));
+    assert.ok(dif < 1e-9, `t=${t} df=${df} dif=${dif}`);
+  }
 });
