@@ -211,7 +211,8 @@ body {
   color: var(--teal-dark);
   margin-bottom: 1.1rem;
 }
-.hero-eyebrow::before {
+.hero-eyebrow::before,
+.hero-eyebrow::after {
   content: "";
   width: 32px; height: 2px;
   background: var(--teal-dark);
@@ -1105,7 +1106,8 @@ footer {
   display: grid; grid-template-columns: 1.1fr 1fr; gap: 4rem; align-items: center;
 }
 .band .hero-eyebrow { color: var(--teal); }
-.band .hero-eyebrow::before { background: var(--teal); }
+.band .hero-eyebrow::before,
+.band .hero-eyebrow::after { background: var(--teal); }
 .band h2 {
   font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 2.4rem;
   line-height: 1.2; letter-spacing: -0.5px; color: #fff;
