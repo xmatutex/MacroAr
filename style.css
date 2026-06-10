@@ -32,7 +32,7 @@ body {
   top: 0;
   z-index: 100;
   border-bottom: 1px solid var(--border);
-  padding: 0 1.5rem;
+  padding: 0 2rem;
 }
 
 .nav-inner {
@@ -55,14 +55,14 @@ body {
   line-height: 1;
   flex-shrink: 0;
   text-decoration: none;
-  transform: translateY(-5px); /* deja lugar para la bajada de abajo */
+  transform: translateY(-6px); /* deja lugar para la bajada de abajo */
 }
 .nav-logo span { color: var(--ink); }
 .nav-logo::after {
   content: "CENTRO DE DATOS MACROECONÓMICOS";
   position: absolute;
   left: 1px;
-  top: calc(100% + 1px);
+  top: calc(100% + 4px);
   font-family: 'Inter', sans-serif;
   font-weight: 600;
   font-size: 0.55rem;
@@ -174,7 +174,7 @@ body {
   position: relative;
   overflow: hidden;
   background: linear-gradient(180deg, #fbfcfd 0%, #ffffff 100%);
-  padding: 4.5rem 1.5rem 4rem;
+  padding: 4.5rem 2rem 4rem;
   color: var(--ink);
 }
 /* Formas diagonales (firma visual tipo consultora) — 4 capas como el prototipo */
@@ -306,7 +306,7 @@ body {
 /* ── Charts section ──────────────────────────────────────── */
 .charts-section {
   flex: 1;
-  padding: 3rem 1.5rem 3.5rem;
+  padding: 3rem 2rem 3.5rem;
 }
 
 .charts-inner {
@@ -453,9 +453,9 @@ body {
 
 /* ── Vista detalle (detalle.html + páginas /indicador/<slug>) ─────────────── */
 .detalle-container {
-  max-width: 1248px; /* 1200 de contenido + 2*1.5rem de padding, alineado con el navbar */
+  max-width: 1264px; /* 1200 de contenido + 2*2rem de padding, alineado con el navbar */
   margin: 2rem auto;
-  padding: 0 1.5rem;
+  padding: 0 2rem;
   flex: 1; /* empuja el footer hacia abajo */
 }
 .detalle-header { margin-bottom: 2rem; }
@@ -495,7 +495,7 @@ body {
 .btn-back:hover { color: #2563eb; text-decoration: underline; }
 
 /* ── Contacto ────────────────────────────────────────────── */
-.contacto-section { max-width: 1200px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+.contacto-section { max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
 .contacto-inner {
   display: grid;
   grid-template-columns: 1.6fr 1fr;
@@ -665,7 +665,7 @@ body {
 footer {
   background: var(--dark);
   color: rgba(255,255,255,0.7);
-  padding: 3rem 1.5rem;
+  padding: 3rem 2rem;
 }
 
 .footer-inner {
@@ -905,7 +905,7 @@ footer {
 }
 
 /* ── Laboratorio ─────────────────────────────────────────── */
-.lab-section { max-width: 1200px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+.lab-section { max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
 
 .lab-controls {
   display: grid;
@@ -1076,7 +1076,7 @@ footer {
 
 /* Cinta de indicadores con divisores */
 .strip { background: #fff; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-.strip-inner { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
+.strip-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
 .strip .hero-stats { display: flex; gap: 0; }
 .strip .hero-stat {
   flex: 1;
@@ -1096,7 +1096,7 @@ footer {
 /* Banda oscura: Laboratorio */
 .band { background: var(--dark); color: #fff; padding: 5rem 0; }
 .band-inner {
-  max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;
+  max-width: 1200px; margin: 0 auto; padding: 0 2rem;
   display: grid; grid-template-columns: 1.1fr 1fr; gap: 4rem; align-items: center;
 }
 .band .hero-eyebrow { color: var(--teal); }
@@ -1129,7 +1129,7 @@ footer {
 /* Franja de fuentes oficiales */
 .fuentes-strip { background: #fff; border-top: 1px solid var(--border); padding: 2.6rem 0; }
 .fuentes-strip-in {
-  max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;
+  max-width: 1200px; margin: 0 auto; padding: 0 2rem;
   display: flex; align-items: center; justify-content: space-between; gap: 2rem; flex-wrap: wrap;
 }
 .fuentes-strip .t { font-size: 0.72rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-weight: 600; }
