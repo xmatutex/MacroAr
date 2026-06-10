@@ -485,6 +485,7 @@ function inicializarHeroStats(lista = SERIES) {
       <div class="hero-stat-label">${serie.titulo}</div>
       <div class="hero-stat-value placeholder" id="hval-${serie.id}">—</div>
       <div class="hero-stat-unit">${serie.unidad}</div>
+      <div class="hero-stat-delta" id="hdelta-${serie.id}"></div>
     `;
     return div;
   };
@@ -517,11 +518,36 @@ function inicializarHeroStats(lista = SERIES) {
   }
 }
 
-function actualizarHeroStat(serie, valor) {
+function actualizarHeroStat(serie, datos) {
   const el = document.getElementById(`hval-${serie.id}`);
   if (!el) return;
-  el.textContent = valor.toLocaleString('es-AR', { maximumFractionDigits: 2 });
+  const ultimo = datos[datos.length - 1];
+  el.textContent = ultimo.valor.toLocaleString('es-AR', { maximumFractionDigits: 2 });
   el.classList.remove('placeholder');
+
+  // Variación vs el dato anterior: verde si sube, rojo si baja.
+  const d = document.getElementById(`hdelta-${serie.id}`);
+  if (!d) return;
+  const prev = datos.length >= 2 ? datos[datos.length - 2].valor : null;
+  if (prev == null || !isFinite(prev) || prev === 0) {
+    d.textContent = '';
+    d.className = 'hero-stat-delta';
+    return;
+  }
+  // Series que ya son una tasa en % (ej. inflación): variación en puntos
+  // porcentuales (pp). El resto: variación relativa en %.
+  const esTasa = !!serie.variacion;
+  const delta = esTasa ? (ultimo.valor - prev) : (ultimo.valor / prev - 1) * 100;
+  const suf = esTasa ? ' pp' : '%';
+  const txt = Math.abs(delta).toLocaleString('es-AR', { maximumFractionDigits: 2 });
+  if (Math.abs(delta) < 0.005) {
+    d.textContent = `= 0${suf}`;
+    d.className = 'hero-stat-delta neutral';
+  } else {
+    const sube = delta > 0;
+    d.textContent = `${sube ? '▲' : '▼'} ${txt}${suf}`;
+    d.className = 'hero-stat-delta ' + (sube ? 'up' : 'down');
+  }
 }
 
 
@@ -1158,7 +1184,7 @@ async function cargarSerie(serie) {
     // Actualizar elementos estáticos con el último dato disponible
     const ultimo = datos[datos.length - 1];
     meta.textContent  = `Último dato: ${formatFecha(ultimo.fecha, serie)}`;
-    actualizarHeroStat(serie, ultimo.valor);
+    actualizarHeroStat(serie, datos);
 
     // Vista detalle: mostrar la fecha del último registro debajo de la categoría
     const ultimaFechaEl = document.getElementById(`ultima-fecha-${serie.id}`);
