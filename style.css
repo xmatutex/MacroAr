@@ -24,6 +24,9 @@ body {
   display: flex;
   flex-direction: column;
 }
+/* El body es flex-column: sin esto, los hijos no se achican abajo del ancho de
+   su contenido (min-width:auto) y secciones con tablas anchas desbordan en mobile. */
+body > * { min-width: 0; }
 
 /* ── Navbar (clara, estilo consultora) ───────────────────── */
 .navbar {
@@ -459,6 +462,7 @@ body {
 
 /* ── Vista detalle (detalle.html + páginas /indicador/<slug>) ─────────────── */
 .detalle-container {
+  width: 100%;
   max-width: 1264px; /* 1200 de contenido + 2*2rem de padding, alineado con el navbar */
   margin: 2rem auto;
   padding: 0 2rem;
@@ -501,7 +505,7 @@ body {
 .btn-back:hover { color: #2563eb; text-decoration: underline; }
 
 /* ── Contacto ────────────────────────────────────────────── */
-.contacto-section { max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+.contacto-section { width: 100%; max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
 .contacto-inner {
   display: grid;
   grid-template-columns: 1.6fr 1fr;
@@ -910,7 +914,7 @@ footer {
 }
 
 /* ── Laboratorio ─────────────────────────────────────────── */
-.lab-section { max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+.lab-section { width: 100%; max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
 
 .lab-controls {
   display: grid;
@@ -923,7 +927,7 @@ footer {
   margin-bottom: 1.5rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 8px 24px rgba(0,0,0,0.05);
 }
-.lab-field { display: flex; flex-direction: column; gap: 0.4rem; }
+.lab-field { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
 .lab-field > label { font-weight: 600; color: var(--navy); font-size: 0.85rem; }
 .lab-field select {
   font-family: 'Inter', sans-serif;
@@ -934,6 +938,8 @@ footer {
   background: #fff;
   color: var(--text);
   outline: none;
+  width: 100%;       /* llena la celda; no toma el ancho de la opción más larga */
+  min-width: 0;      /* permite achicarse (trunca la opción visible) */
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .lab-field select:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(116,172,223,0.18); }
@@ -979,6 +985,8 @@ footer {
   position: relative;
   margin-bottom: 1rem;
 }
+/* El canvas no debe forzar el ancho del contenedor (bug responsive de Chart.js) */
+.lab-chart-wrap canvas { max-width: 100%; }
 
 .lab-footer-row {
   display: flex;
@@ -1031,6 +1039,8 @@ footer {
   border-collapse: collapse;
   font-size: 0.85rem;
   margin-bottom: 1.25rem;
+  display: block;          /* la tabla scrollea sola y no fuerza el ancho de la página */
+  overflow-x: auto;
 }
 .lab-table th {
   background: var(--bg);
@@ -1061,7 +1071,14 @@ footer {
 @media (max-width: 640px) {
   .lab-chart-wrap { height: 320px; padding: 1rem; }
   .lab-scatter-wrap { height: 300px; }
+  .lab-controls { grid-template-columns: 1fr; }   /* controles apilados */
+  .nav-actions { margin-left: auto; }             /* empuja el botón a la derecha */
+  .footer-links { flex-wrap: wrap; }              /* los enlaces no se desbordan */
+  .lab-section { overflow-x: clip; }              /* corta el desborde; las tablas scrollean solas */
 }
+
+/* Evita el scroll horizontal de toda la página en mobile */
+html, body { overflow-x: hidden; }
 
 /* ── Home estilo consultora: CTAs, cinta, banda, fuentes ──── */
 .hero-ctas { display: flex; gap: 1rem; margin-top: 2.2rem; flex-wrap: wrap; }
