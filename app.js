@@ -106,7 +106,7 @@ const SERIES = [
     slug:      'rem-inflacion-general',
     descripcion: 'Inflación general esperada según el REM del BCRA (Relevamiento de Expectativas de Mercado): proyecciones de analistas, serie histórica.',
     titulo:    'Inflación General (REM)',
-    categoria: 'Expectativas (REM)',
+    categoria: 'Relevamiento de Expectativas de Mercado (REM)',
     fuente:    'local',
     serieId:   'rem-ipc',
     unidad:    '%',
@@ -119,7 +119,7 @@ const SERIES = [
     slug:      'rem-inflacion-nucleo',
     descripcion: 'Inflación núcleo esperada según el REM del BCRA: proyecciones de los analistas de mercado, serie histórica con gráfico interactivo.',
     titulo:    'Inflación Núcleo (REM)',
-    categoria: 'Expectativas (REM)',
+    categoria: 'Relevamiento de Expectativas de Mercado (REM)',
     fuente:    'local',
     serieId:   'rem-ipc-nucleo',
     unidad:    '%',
@@ -132,7 +132,7 @@ const SERIES = [
     slug:      'rem-pib',
     descripcion: 'Evolución esperada del PIB de Argentina según el REM del BCRA: proyecciones de crecimiento de los analistas, serie histórica.',
     titulo:    'Evolución del PIB (REM)',
-    categoria: 'Expectativas (REM)',
+    categoria: 'Relevamiento de Expectativas de Mercado (REM)',
     fuente:    'local',
     serieId:   'rem-pib',
     unidad:    '%',
@@ -145,7 +145,7 @@ const SERIES = [
     slug:      'rem-tipo-de-cambio',
     descripcion: 'Tipo de cambio nominal esperado según el REM del BCRA: proyección del dólar de los analistas de mercado, serie histórica.',
     titulo:    'Tipo de Cambio Nominal (REM)',
-    categoria: 'Expectativas (REM)',
+    categoria: 'Relevamiento de Expectativas de Mercado (REM)',
     fuente:    'local',
     serieId:   'rem-tcn',
     unidad:    '$/USD',
@@ -156,9 +156,9 @@ const SERIES = [
   {
     id:        'rem-badlar',
     slug:      'rem-tasa-badlar',
-    descripcion: 'Tasa BADLAR esperada según el REM del BCRA: proyección de la tasa de interés de los analistas de mercado, serie histórica.',
-    titulo:    'Tasa BADLAR (REM)',
-    categoria: 'Expectativas (REM)',
+    descripcion: 'Tasa TAMAR esperada según el REM del BCRA: proyección de la tasa de interés de los analistas de mercado, serie histórica.',
+    titulo:    'Tasa TAMAR (REM)',
+    categoria: 'Relevamiento de Expectativas de Mercado (REM)',
     fuente:    'local',
     serieId:   'rem-badlar',
     unidad:    '%',
@@ -171,7 +171,7 @@ const SERIES = [
     slug:      'rem-exportaciones',
     descripcion: 'Exportaciones FOB esperadas según el REM del BCRA: proyección del comercio exterior de los analistas, serie histórica.',
     titulo:    'Exportaciones FOB (REM)',
-    categoria: 'Expectativas (REM)',
+    categoria: 'Relevamiento de Expectativas de Mercado (REM)',
     fuente:    'local',
     serieId:   'rem-expo',
     unidad:    'M USD',
@@ -184,7 +184,7 @@ const SERIES = [
     slug:      'rem-importaciones',
     descripcion: 'Importaciones CIF esperadas según el REM del BCRA: proyección del comercio exterior de los analistas, serie histórica.',
     titulo:    'Importaciones CIF (REM)',
-    categoria: 'Expectativas (REM)',
+    categoria: 'Relevamiento de Expectativas de Mercado (REM)',
     fuente:    'local',
     serieId:   'rem-impo',
     unidad:    'M USD',
@@ -197,7 +197,7 @@ const SERIES = [
     slug:      'rem-desocupacion',
     descripcion: 'Desocupación esperada según el REM del BCRA: proyección de la tasa de desempleo de los analistas, serie histórica.',
     titulo:    'Desocupación (REM)',
-    categoria: 'Expectativas (REM)',
+    categoria: 'Relevamiento de Expectativas de Mercado (REM)',
     fuente:    'local',
     serieId:   'rem-desocupacion',
     unidad:    '%',
@@ -210,7 +210,7 @@ const SERIES = [
     slug:      'rem-resultado-primario',
     descripcion: 'Resultado primario fiscal esperado según el REM del BCRA: proyección de las cuentas públicas de los analistas, serie histórica.',
     titulo:    'Resultado Primario (REM)',
-    categoria: 'Expectativas (REM)',
+    categoria: 'Relevamiento de Expectativas de Mercado (REM)',
     fuente:    'local',
     serieId:   'rem-resultado',
     unidad:    'Miles M ARS',
@@ -1164,8 +1164,15 @@ async function obtenerDatosSerie(serie, diasReq, mesesReq, completo) {
     if (!completo) datos = datos.slice(-(serie.meses || 36));
     return datos;
   } else if (serie.fuente === 'local') {
-    // JSON local; historial completo salvo series de mercado con `ventana: true`.
-    const raw = await fetchLocal(serie.serieId, serie.ventana ? diasReq : null);
+    const res = await fetch(`/data/${serie.serieId}.json`);
+    if (!res.ok) throw new Error(`No se encontró /data/${serie.serieId}.json`);
+    const json = await res.json();
+    let raw = Array.isArray(json) ? json : (json.datos || []);
+    if (!Array.isArray(json) && json.publicacion) serie._publicacion = json.publicacion;
+    if (serie.ventana && diasReq) {
+      const desde = isoHace(diasReq);
+      raw = raw.filter(d => (d.fecha || '').split('T')[0] >= desde);
+    }
     return serie.variacion ? variacionPct(raw) : raw;
   } else if (serie.fuente.startsWith('mock')) {
     return generarMock(serie.fuente, mesesReq);
@@ -1200,12 +1207,13 @@ async function cargarSerie(serie) {
 
     // Actualizar elementos estáticos con el último dato disponible
     const ultimo = datos[datos.length - 1];
-    meta.textContent  = `Último dato: ${formatFecha(ultimo.fecha, serie)}`;
+    const fechaMeta = serie._publicacion || ultimo.fecha;
+    meta.textContent  = `Último dato: ${formatFecha(fechaMeta, serie)}`;
     actualizarHeroStat(serie, datos);
 
     // Vista detalle: mostrar la fecha del último registro debajo de la categoría
     const ultimaFechaEl = document.getElementById(`ultima-fecha-${serie.id}`);
-    if (ultimaFechaEl) ultimaFechaEl.textContent = `Último registro: ${formatFecha(ultimo.fecha, serie)}`;
+    if (ultimaFechaEl) ultimaFechaEl.textContent = `Último registro: ${formatFecha(fechaMeta, serie)}`;
 
     // Configurar controles y renderizar el gráfico por primera vez
     if (isToolsPage || isDetallePage) setupChartControls(serie, datos);
@@ -1361,9 +1369,6 @@ function loadAll() {
   } else if (grid) {
     seriesAMostrar.forEach(serie => grid.appendChild(crearCard(serie)));
 
-    // En el Inicio, agregar un acceso al catálogo completo
-    if (esInicio) grid.appendChild(crearCardVerTodos());
-
     // Agregar la tarjeta de calculadora al final del grid de métricas
     if (isToolsPage) {
       grid.appendChild(crearCardCalculadora());
@@ -1462,3 +1467,27 @@ if (_btnBack) {
 }
 
 loadAll();
+
+// ─── Menú hamburguesa ─────────────────────────────────────────────────────────
+(function () {
+  const burger = document.querySelector('.nav-burger');
+  const menu   = document.querySelector('.nav-mobile');
+  if (!burger || !menu) return;
+
+  burger.addEventListener('click', () => {
+    const abierto = burger.classList.toggle('abierto');
+    menu.classList.toggle('abierto', abierto);
+    burger.setAttribute('aria-expanded', abierto);
+    document.body.style.overflow = abierto ? 'hidden' : '';
+  });
+
+  // Cerrar al hacer click en un link
+  menu.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      burger.classList.remove('abierto');
+      menu.classList.remove('abierto');
+      burger.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    });
+  });
+})();
