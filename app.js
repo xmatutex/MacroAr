@@ -23,6 +23,7 @@ const SERIES = [
     diasFree: 30,
     premium:  false,
     principal: true,
+    compraventa: true,
   },
   {
     id:      'tc-blue',
@@ -373,6 +374,7 @@ function generarMock(tipo, meses) {
 // ─── Fetch APIs ───────────────────────────────────────────────────────────────
 
 let _bluelyticsCache = null;
+const _bluelyticsCV = {};  // { oficial: {compra, venta}, blue: {compra, venta} }
 
 async function fetchBluelytics(tipo, dias) {
   if (!_bluelyticsCache) {
@@ -380,11 +382,15 @@ async function fetchBluelytics(tipo, dias) {
     if (!res.ok) throw new Error(`Bluelytics HTTP ${res.status}`);
     _bluelyticsCache = await res.json();
   }
-  return _bluelyticsCache
+  const filtrado = _bluelyticsCache
     .filter(d => d.source.toLowerCase() === tipo.toLowerCase())
     .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(-dias)
-    .map(d => ({ fecha: d.date, valor: (d.value_sell + d.value_buy) / 2 }));
+    .slice(-dias);
+  if (filtrado.length) {
+    const last = filtrado[filtrado.length - 1];
+    _bluelyticsCV[tipo] = { compra: last.value_buy, venta: last.value_sell };
+  }
+  return filtrado.map(d => ({ fecha: d.date, valor: (d.value_sell + d.value_buy) / 2 }));
 }
 
 async function fetchIndec(serieId, meses) {
@@ -485,6 +491,7 @@ function inicializarHeroStats(lista = SERIES) {
       <div class="hero-stat-label">${serie.titulo}</div>
       <div class="hero-stat-value placeholder" id="hval-${serie.id}">—</div>
       <div class="hero-stat-unit">${serie.unidad}</div>
+      ${serie.compraventa ? `<div class="hero-stat-cv" id="hcv-${serie.id}"></div>` : ''}
       <div class="hero-stat-delta" id="hdelta-${serie.id}"></div>
     `;
     return div;
@@ -1210,6 +1217,11 @@ async function cargarSerie(serie) {
     const fechaMeta = serie._publicacion || ultimo.fecha;
     meta.textContent  = `Último dato: ${formatFecha(fechaMeta, serie)}`;
     actualizarHeroStat(serie, datos);
+    if (serie.compraventa && _bluelyticsCV[serie.tipo_tc]) {
+      const cv = _bluelyticsCV[serie.tipo_tc];
+      const cvEl = document.getElementById(`hcv-${serie.id}`);
+      if (cvEl) cvEl.textContent = `Compra ${cv.compra.toLocaleString('es-AR')} · Venta ${cv.venta.toLocaleString('es-AR')}`;
+    }
 
     // Vista detalle: mostrar la fecha del último registro debajo de la categoría
     const ultimaFechaEl = document.getElementById(`ultima-fecha-${serie.id}`);
