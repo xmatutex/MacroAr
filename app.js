@@ -817,8 +817,8 @@ function renderChart(serie, datos) {
             font: { size: 10 },
             callback: v =>
               Math.abs(v) >= 1000
-                ? `${(v / 1000).toLocaleString('es-AR', { maximumFractionDigits: 1 })}k`
-                : v.toLocaleString('es-AR', { maximumFractionDigits: 1 }),
+                ? `${(v / 1000).toLocaleString('es-AR', { maximumFractionDigits: 0 })}k`
+                : v.toLocaleString('es-AR', { maximumFractionDigits: 0 }),
           },
           grid:   { color: '#f1f5f9' },
           border: { display: false },
