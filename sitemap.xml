@@ -193,6 +193,30 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://macroar.com.ar/indicador/dolar-mep</loc>
+    <lastmod>2026-06-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://macroar.com.ar/indicador/dolar-ccl</loc>
+    <lastmod>2026-06-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://macroar.com.ar/indicador/tasa-politica-monetaria</loc>
+    <lastmod>2026-06-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://macroar.com.ar/indicador/uva</loc>
+    <lastmod>2026-06-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://macroar.com.ar/indicador/ipi-manufacturero</loc>
     <lastmod>2026-06-17</lastmod>
     <changefreq>daily</changefreq>

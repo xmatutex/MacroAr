@@ -402,6 +402,61 @@ const SERIES = [
     mensual:   true,
   },
   {
+    id:        'dolar-mep',
+    slug:      'dolar-mep',
+    descripcion: 'Cotización del dólar MEP (bursátil) en Argentina: precio de venta histórico diario, también llamado dólar bolsa. Operado a través de bonos en pesos y dólares.',
+    titulo:    'Dólar MEP (Bolsa)',
+    categoria: 'Mercado Cambiario',
+    fuente:    'argentinadatos',
+    serieId:   'cotizaciones/dolares/bolsa',
+    campo:     'venta',
+    unidad:    '$/USD',
+    color:     '#7c3aed',
+    dias:      365,
+    premium:   false,
+  },
+  {
+    id:        'dolar-ccl',
+    slug:      'dolar-ccl',
+    descripcion: 'Cotización del dólar contado con liquidación (CCL) en Argentina: precio de venta histórico diario. Operado a través de activos que cotizan en pesos y en el exterior.',
+    titulo:    'Dólar CCL',
+    categoria: 'Mercado Cambiario',
+    fuente:    'argentinadatos',
+    serieId:   'cotizaciones/dolares/contadoconliqui',
+    campo:     'venta',
+    unidad:    '$/USD',
+    color:     '#9333ea',
+    dias:      365,
+    premium:   false,
+  },
+  {
+    id:        'tpm',
+    slug:      'tasa-politica-monetaria',
+    descripcion: 'Tasa de Política Monetaria (TPM) del BCRA en Argentina: tasa de interés de referencia fijada por el Banco Central, serie histórica mensual.',
+    titulo:    'Tasa de Política Monetaria',
+    categoria: 'Sistema Financiero',
+    fuente:    'bcra',
+    serieId:   28,
+    unidad:    '% anual',
+    color:     '#0891b2',
+    dias:      730,
+    premium:   false,
+    mensual:   true,
+  },
+  {
+    id:        'uva',
+    slug:      'uva',
+    descripcion: 'Evolución de la Unidad de Valor Adquisitivo (UVA) del BCRA en Argentina: serie histórica diaria del índice utilizado para ajustar créditos hipotecarios y depósitos.',
+    titulo:    'UVA',
+    categoria: 'Sistema Financiero',
+    fuente:    'bcra',
+    serieId:   31,
+    unidad:    'ARS',
+    color:     '#0d9488',
+    dias:      730,
+    premium:   false,
+  },
+  {
     id:        'ipi-manufacturero',
     slug:      'ipi-manufacturero',
     descripcion: 'Índice de Producción Industrial Manufacturero (IPI) de Argentina: serie histórica mensual publicada por INDEC, base 2004.',
@@ -603,7 +658,7 @@ async function fetchLocal(serieId, dias = null) {
   return data.filter(d => (d.fecha || '').split('T')[0] >= desde);
 }
 
-async function fetchArgentinaDatos(endpoint, dias) {
+async function fetchArgentinaDatos(endpoint, dias, campo = 'valor') {
   const res = await fetch(`https://api.argentinadatos.com/v1/${endpoint}`);
   if (!res.ok) throw new Error(`ArgentinaDatos HTTP ${res.status}`);
   const data = await res.json();
@@ -611,7 +666,7 @@ async function fetchArgentinaDatos(endpoint, dias) {
   return data
     .filter(d => d.fecha >= desde)
     .sort((a, b) => a.fecha.localeCompare(b.fecha))
-    .map(d => ({ fecha: d.fecha, valor: d.valor }));
+    .map(d => ({ fecha: d.fecha, valor: d[campo] ?? d.valor }));
 }
 
 
@@ -1302,7 +1357,7 @@ async function obtenerDatosSerie(serie, diasReq, mesesReq, completo) {
     const raw = await fetchBcra(serie.serieId, diasReq);
     return serie.variacion ? variacionPct(raw) : raw;
   } else if (serie.fuente === 'argentinadatos') {
-    return await fetchArgentinaDatos(serie.serieId, diasReq);
+    return await fetchArgentinaDatos(serie.serieId, diasReq, serie.campo);
   } else if (serie.fuente === 'emae') {
     const emae = await fetchEmae(serie.seriesEmae);
     let datos = emae.desest;  // por defecto: desestacionalizada
