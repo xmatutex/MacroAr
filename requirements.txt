@@ -5,3 +5,7 @@ pandas
 openpyxl   # leer .xlsx
 xlrd       # leer .xls
 certifi    # CA bundle para el SSL del BCRA (fetch_rem.py)
+
+# agente_macro.py
+anthropic>=0.30.0
+python-dotenv
