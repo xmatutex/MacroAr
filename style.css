@@ -376,8 +376,7 @@ body > * { min-width: 0; }
 .nav-dropdown-menu {
   position: absolute;
   top: calc(100% + 0.6rem);
-  right: 0;
-  left: auto;
+  left: 0;
   min-width: 230px;
   background: #fff;
   border: 1px solid var(--border);
@@ -420,7 +419,8 @@ body > * { min-width: 0; }
 .nav-submenu {
   position: absolute;
   top: -0.4rem;
-  left: 100%;
+  right: 100%;
+  left: auto;
   min-width: 230px;
   max-height: 70vh;
   overflow-y: auto;
