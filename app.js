@@ -739,8 +739,11 @@ function actualizarHeroStat(serie, datos) {
   const el = document.getElementById(`hval-${serie.id}`);
   if (!el) return;
   const ultimo = datos[datos.length - 1];
-  el.textContent = ultimo.valor.toLocaleString('es-AR', { maximumFractionDigits: 2 });
+  const decimalesHero = Math.abs(ultimo.valor) >= 1000 ? 0 : 2;
+  el.textContent = ultimo.valor.toLocaleString('es-AR', { maximumFractionDigits: decimalesHero });
   el.classList.remove('placeholder');
+  const len = el.textContent.length;
+  el.style.fontSize = len > 11 ? '1.1rem' : len > 8 ? '1.35rem' : '';
 
   const d = document.getElementById(`hdelta-${serie.id}`);
   if (!d) return;
