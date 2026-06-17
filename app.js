@@ -815,10 +815,7 @@ function renderChart(serie, datos) {
         y: {
           ticks: {
             font: { size: 10 },
-            callback: v =>
-              Math.abs(v) >= 1000
-                ? `${(v / 1000).toLocaleString('es-AR', { maximumFractionDigits: 0 })}k`
-                : v.toLocaleString('es-AR', { maximumFractionDigits: 0 }),
+            callback: v => v.toLocaleString('es-AR', { maximumFractionDigits: 0 }),
           },
           grid:   { color: '#f1f5f9' },
           border: { display: false },
