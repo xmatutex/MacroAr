@@ -19,7 +19,11 @@ OUTPUT_DIR = 'data'
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
-def fetch_yahoo(symbol, nombre, rango='5y'):
+def fetch_yahoo(symbol, nombre, rango='5y', factor=1.0):
+    """
+    Descarga precios de cierre diarios desde Yahoo Finance.
+    factor: multiplicador para convertir unidades (ej. centavos→USD, bushels→toneladas).
+    """
     print(f"Trayendo {nombre} ({symbol}) desde Yahoo Finance...")
     url = (
         f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
@@ -36,7 +40,7 @@ def fetch_yahoo(symbol, nombre, rango='5y'):
                 'fecha': datetime.datetime.fromtimestamp(
                     t, datetime.timezone.utc
                 ).strftime('%Y-%m-%d'),
-                'valor': round(c, 2),
+                'valor': round(c * factor, 2),
             }
             for t, c in zip(timestamps, closes)
             if c is not None
@@ -52,5 +56,12 @@ def fetch_yahoo(symbol, nombre, rango='5y'):
 if __name__ == "__main__":
     # ^MERV = índice Merval (Bolsa de Buenos Aires)
     fetch_yahoo('%5EMERV', 'merval')
-    # GC=F = futuro de oro COMEX (USD/oz directo)
+    # GC=F = futuro de oro COMEX (USD/oz)
     fetch_yahoo('GC%3DF', 'oro', rango='5y')
+    # ZS=F = futuro de soja CBOT (cotiza en centavos/bushel)
+    # factor = 36.7437 / 100 convierte centavos/bushel → USD/tonelada métrica
+    fetch_yahoo('ZS%3DF', 'soja', rango='5y', factor=36.7437 / 100)
+    # CL=F = futuro de petróleo WTI NYMEX (USD/barril)
+    fetch_yahoo('CL%3DF', 'wti', rango='5y')
+    # BZ=F = futuro de petróleo Brent ICE (USD/barril)
+    fetch_yahoo('BZ%3DF', 'brent', rango='5y')

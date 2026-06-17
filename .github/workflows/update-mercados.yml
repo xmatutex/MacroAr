@@ -36,7 +36,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if [ -n "$(git status --porcelain data/)" ]; then
             git add data/
-            git commit -m "data: auto-update Merval ($(date -u +%Y-%m-%d))"
+            git commit -m "data: auto-update mercados y commodities ($(date -u +%Y-%m-%d))"
             git push
           else
             echo "Sin cambios en los datos."

@@ -145,6 +145,24 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://macroar.com.ar/indicador/precio-soja</loc>
+    <lastmod>2026-06-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://macroar.com.ar/indicador/petroleo-wti</loc>
+    <lastmod>2026-06-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://macroar.com.ar/indicador/petroleo-brent</loc>
+    <lastmod>2026-06-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://macroar.com.ar/indicador/riesgo-pais</loc>
     <lastmod>2026-06-17</lastmod>
     <changefreq>daily</changefreq>
