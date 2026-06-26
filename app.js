@@ -583,6 +583,50 @@ const SERIES = [
     premium:   false,
     mensual:   true,
   },
+  // ─── Empleo ───────────────────────────────────────────────────────────────────
+  {
+    id:        'desocupacion',
+    slug:      'tasa-desocupacion',
+    descripcion: 'Tasa de desocupación de Argentina (EPH INDEC): evolución trimestral del desempleo en porcentaje de la población económicamente activa.',
+    titulo:    'Tasa de Desocupación',
+    categoria: 'Empleo',
+    fuente:    'indec',
+    serieId:   '42.3_EPH_PUNTUATAL_0_M_30',
+    factor:    100,
+    unidad:    '%',
+    color:     '#dc2626',
+    meses:     20,
+    premium:   false,
+    mensual:   true,
+  },
+  {
+    id:        'empleo-registrado',
+    slug:      'empleo-registrado',
+    descripcion: 'Puestos de trabajo asalariado registrado en Argentina: evolución trimestral del empleo formal del sector privado (INDEC / MTEySS).',
+    titulo:    'Empleo Registrado (privado)',
+    categoria: 'Empleo',
+    fuente:    'indec',
+    serieId:   '324.1_TOTAL_GENEADO__51',
+    unidad:    'miles de puestos',
+    color:     '#16a34a',
+    meses:     20,
+    premium:   false,
+    mensual:   true,
+  },
+  {
+    id:        'empleo-no-registrado',
+    slug:      'empleo-no-registrado',
+    descripcion: 'Trabajadores asalariados no registrados (informales) en Argentina: evolución trimestral según datos del MTEySS / INDEC.',
+    titulo:    'Empleo No Registrado',
+    categoria: 'Empleo',
+    fuente:    'indec',
+    serieId:   '324.1_TOTAL_GENEREG__32',
+    unidad:    'miles de puestos',
+    color:     '#ea580c',
+    meses:     20,
+    premium:   false,
+    mensual:   true,
+  },
 ];
 
 
@@ -1438,7 +1482,8 @@ async function obtenerDatosSerie(serie, diasReq, mesesReq, completo) {
   } else if (serie.fuente.startsWith('mock')) {
     return generarMock(serie.fuente, mesesReq);
   } else {
-    const raw = await fetchIndec(serie.serieId, mesesReq);
+    let raw = await fetchIndec(serie.serieId, mesesReq);
+    if (serie.factor) raw = raw.map(d => ({ fecha: d.fecha, valor: d.valor * serie.factor }));
     return serie.variacion ? variacionPct(raw) : raw;
   }
 }
