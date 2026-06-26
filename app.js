@@ -787,7 +787,7 @@ function formatFechaHero(fechaISO, mensual) {
   const diff = Math.round((hoy - fecha) / 86400000);
   if (diff === 0) return 'hoy';
   if (diff === 1) return 'ayer';
-  return `${dia} ${MESES[mes - 1]}.`;
+  return `${dia} ${MESES[mes - 1]}. ${anio}`;
 }
 
 function actualizarHeroStat(serie, datos) {
