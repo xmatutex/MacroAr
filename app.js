@@ -531,7 +531,7 @@ const SERIES = [
     slug:      'precios-mayoristas',
     descripcion: 'Índice de Precios Internos al por Mayor (IPIM) de Argentina: variación interanual mensual publicada por INDEC, base diciembre 2015.',
     titulo:    'Precios Mayoristas (IPIM)',
-    categoria: 'Precios',
+    categoria: 'Precios e Inflación',
     fuente:    'indec',
     serieId:   '448.1_NIVEL_GENERAL_0_0_13_46',
     unidad:    '% i.a.',
@@ -730,6 +730,7 @@ function inicializarHeroStats(lista = SERIES) {
       <div class="hero-stat-value placeholder" id="hval-${serie.id}">—</div>
       <div class="hero-stat-unit">${serie.unidad}</div>
       ${serie.compraventa ? `<div class="hero-stat-cv" id="hcv-${serie.id}"></div>` : ''}
+      <div class="hero-stat-fecha" id="hfecha-${serie.id}"></div>
       <div class="hero-stat-delta" id="hdelta-${serie.id}"></div>
     `;
     return div;
@@ -777,6 +778,18 @@ const SESGO_NEUTRAL = new Set([
   'oro-usd', 'base-monetaria', 'tasa-badlar', 'tasa-plazo-fijo', 'rem-badlar', 'rem-impo',
 ]);
 
+function formatFechaHero(fechaISO, mensual) {
+  const [anio, mes, dia] = fechaISO.slice(0, 10).split('-').map(Number);
+  const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  if (mensual) return `${MESES[mes - 1]}. ${anio}`;
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  const fecha = new Date(anio, mes - 1, dia);
+  const diff = Math.round((hoy - fecha) / 86400000);
+  if (diff === 0) return 'hoy';
+  if (diff === 1) return 'ayer';
+  return `${dia} ${MESES[mes - 1]}.`;
+}
+
 function actualizarHeroStat(serie, datos) {
   const el = document.getElementById(`hval-${serie.id}`);
   if (!el) return;
@@ -786,6 +799,9 @@ function actualizarHeroStat(serie, datos) {
   el.classList.remove('placeholder');
   const len = el.textContent.length;
   el.style.fontSize = len > 11 ? '1.1rem' : len > 8 ? '1.35rem' : '';
+
+  const felEl = document.getElementById(`hfecha-${serie.id}`);
+  if (felEl) felEl.textContent = formatFechaHero(ultimo.fecha, !!serie.mensual);
 
   const d = document.getElementById(`hdelta-${serie.id}`);
   if (!d) return;

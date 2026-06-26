@@ -288,6 +288,8 @@ body > * { min-width: 0; }
 
 .hero-stat-cv { font-size: 0.72rem; color: var(--muted); margin-top: 0.15rem; }
 
+.hero-stat-fecha { font-size: 0.68rem; color: var(--muted); margin-top: 0.2rem; opacity: 0.8; }
+
 .hero-stat-delta { font-size: 0.78rem; font-weight: 600; margin-top: 0.35rem; min-height: 1em; }
 .hero-stat-delta.buena   { color: #0a8a5f; }  /* verde: mejora económica */
 .hero-stat-delta.mala    { color: #c2403c; }  /* rojo: empeora */
